@@ -1,6 +1,6 @@
 ﻿[![Build status](https://travis-ci.org/JavaCardSpot-dev/GidsApplet.svg?branch=master)](https://travis-ci.org/JavaCardSpot-dev/GidsApplet)
 
-:information_source: **IMPORTANT: This repository is used for class [PV204 Security Technologies at Masaryk University](https://is.muni.cz/auth/predmety/predmet?lang=en;setlang=en;pvysl=3141746). All meaningful improvements will be attempted to be pushed to upstream repository in June 2018.**
+:information_source: **IMPORTANT: This repository is used for class [PV204 Security Technologies at Masaryk University](https://is.muni.cz/auth/predmety/predmet?lang=en;setlang=en;pvysl=3141746). It has been forked from the [vletoux/GidsApplet](https://github.com/vletoux/GidsApplet) repository, and Vincent Le Toux (vincent.letoux@mysmartlogon.com) is the original author. We will perform a review of code security and propose ways for improvements. All meaningful improvements will be attempted to be pushed to upstream repository in June 2018.**
 
 # GidsApplet
 Generic Identity Device Specification (GIDS) smart card is the only PKI smart card whose driver is integrated on each Windows since Windows 7 SP1 and which can be used read and write. No Windows driver installation is required and this card can be used instantly.
