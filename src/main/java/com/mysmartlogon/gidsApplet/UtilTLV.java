@@ -196,9 +196,7 @@ public class UtilTLV {
         short i = 1;
         short totalsize = 0;
 
-        if ((buf[offset] & 0x1F) != 0x1F) {
-            // simplified tag
-        } else {
+        if ((buf[offset] & 0x1F) == 0x1F) {
             // tag start with all 5 last bits to 1
             // skip the tag
             while (((buf[(short) (offset + i)] & 0x80) != 0) && i < len) {
@@ -207,6 +205,7 @@ public class UtilTLV {
             // pass the last byte of the tag
             i+=1;
         }
+        
         if ((short) (i+1) >len) {
             return 0;
         }
@@ -271,9 +270,7 @@ public class UtilTLV {
         short sizeforsize = 0;
         short i = 1;
 
-        if ((buf[offset] & 0x1F) != 0x1F) {
-            // simplified tag
-        } else {
+        if ((buf[offset] & 0x1F) == 0x1F) {
             // tag start with all 5 last bits to 1
             // skip the tag
             while (((buf[(short) (offset + i)] & 0x80) != 0) && ((short)(i+offset)) < len) {
@@ -282,6 +279,7 @@ public class UtilTLV {
             // pass the last byte of the tag
             i+=1;
         }
+        
         // check the size
         if ((buf[(short) (offset + i)] & 0x80) != 0) {
             // size encoded in many bytes
