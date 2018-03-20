@@ -239,7 +239,7 @@ public class GidsPINManager {
         // Check the PIN.
         if(!pin.check(buf, ISO7816.OFFSET_CDATA, (byte) lc)) {
             ISOException.throwIt((short)(ErrorCode.SW_PIN_TRIES_REMAINING | pin.getTriesRemaining()));
-       
+        }
     }
 
     /**
