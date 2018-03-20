@@ -36,6 +36,8 @@ import javacardx.crypto.Cipher;
 
 /**
  * \brief class used to encapsulte authentication functions
+ // This class is for managing the GidsPIN
+ // Set default constant values for PIN and State Assignment to Admin Authentications
  */
 public class GidsPINManager {
 
@@ -51,6 +53,7 @@ public class GidsPINManager {
     private static final byte EXTERNAL_AUTHENTICATED = 3;
     private static final byte MUTUAL_AUTHENTICATED = 4;
 
+    // an insance of GidsPIN Class
     private GidsPIN pin_pin = null;
 
     private boolean isInInitializationMode = true;
@@ -62,6 +65,8 @@ public class GidsPINManager {
     private byte[] sharedKey = null;
     private byte[] status = null;
 
+    // Constructor for setting default values for the variables of the instance GidsPIN
+    // also specify the challenges, keys and status.
     public GidsPINManager() {
         pin_pin = new GidsPIN(PIN_MAX_TRIES, PIN_MAX_LENGTH, PIN_MIN_LENGTH);
         ExternalChallenge = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
@@ -84,13 +89,13 @@ public class GidsPINManager {
         }
     }
 
+    // This function set the Initialization Mode depending upon the supplied input value.
     public void SetInitializationMode(boolean value) {
         isInInitializationMode = value;
-        if (value == false) {
-            DeauthenticateAllPin();
-        }
+        if (!value) DeauthenticateAllPin();       
     }
 
+    // Deauthentication process reset the PIN. Also Clear the challengeData and Shared Key
     public void DeauthenticateAllPin() {
         pin_pin.reset();
         // deauthenticate admin key
@@ -101,6 +106,7 @@ public class GidsPINManager {
         KeyReference[0] = null;
     }
 
+    //This function check the User Authentication by first checking the Initialization Mode followed by the PIN validation
     private boolean CheckUserAuthentication() {
         if (!isInInitializationMode) {
             if (!pin_pin.isValidated()) {
@@ -110,6 +116,7 @@ public class GidsPINManager {
         return true;
     }
 
+    
     private boolean CheckExternalOrMutualAuthentication() {
         if (!isInInitializationMode) {
             if (status[0] != EXTERNAL_AUTHENTICATED && status[0] != MUTUAL_AUTHENTICATED) {
