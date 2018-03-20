@@ -3,7 +3,7 @@ package com.mysmartlogon.gidsAppletTests;
 import static org.junit.Assert.*;
 
 import java.util.Arrays;
-import java.util.Date;
+//import java.util.Date;
 import java.util.Random;
 
 import javax.smartcardio.CommandAPDU;
@@ -19,7 +19,7 @@ import javacard.framework.AID;
 import javacard.framework.Util;
 import javacard.security.DESKey;
 import javacard.security.KeyBuilder;
-import javacard.security.RandomData;
+//import javacard.security.RandomData;
 import javacardx.crypto.Cipher;
 
 public abstract class GidsBaseTestClass {
