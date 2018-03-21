@@ -31,6 +31,7 @@ import javacard.framework.ISOException;
  * \brief The File class acting as superclass for any file.
  */
 public abstract class File {
+    // Unique File ID for each file
     private final short fileID;
     private DedicatedFile parentDF;
 
@@ -112,6 +113,14 @@ public abstract class File {
         state = STATE_CREATION;
     }
 
+    /*
+    // This function CheckPermission checks the stste (STATE_CREATION or STATE_TERMINATED ) 
+    // and accordingly check further type of instance it is from 
+    // (ApplicationFile: All operation Allowed, 
+    // ElementaryFile or DedicatedFile: only transition to operational state.
+    // otherwise throw exception SW_CONDITIONS_NOT_SATISFIED
+    // 
+    */
     public void CheckPermission(GidsPINManager pinManager, byte flag_operation) {
         if (state == STATE_CREATION) {
             if (this instanceof ApplicationFile) {
@@ -148,23 +157,26 @@ public abstract class File {
                 }
             }
         }
+        // Check ACL Requirements if any of the operation is allowed 
         CheckACLRequirements(pinManager, flag_operation);
     }
 
 
     /**
-     * \brief Get the relevant ACL byte for the operation.
-     *
+     * \brief Get the relevant ACL byte for the operation. if there is no ACL,then all operation are allowed.
      * \param flag_operation The operation. One of ACL_OP_*.
-     *
      * \return The ACL byte.
      */
     private void CheckACLRequirements(GidsPINManager pinManager, byte flag_operation) {
         if(aclPos == -1) {
             return; // Any operation is allowed if there is no ACL.
         }
+        // if ACL Position is not -1, then get the Access Mode and index from file Control Parameter
         byte accessmod = fcp[(short)(aclPos+2)];
         short index = (short)(aclPos+2);
+        // check the type of Access Control Operations and accordingly check ACL and 
+        //whether card is contact or contacless followed by protocol and authentcation.
+        // 
         if ((accessmod & ACL_OP_40) != 0) {
             index++;
             if (flag_operation == ACL_OP_40) {
@@ -250,10 +262,12 @@ public abstract class File {
         return this.fcp;
     }
 
+    // return the state of the file.
     public final byte getState() {
         return state;
     }
 
+    // Sets the state of the file.
     public final void setState(byte state) {
         this.state = state;
     }
