@@ -272,7 +272,7 @@ public class GidsFileSystem extends ApplicationFile {
         try {
             this.findFile(fileID, SPECIFY_ANY);
             throw InvalidArgumentsException.getInstance();
-        } catch(NotFoundException e) {
+        } catch(NotFoundException ignored) {
 
         }
 
