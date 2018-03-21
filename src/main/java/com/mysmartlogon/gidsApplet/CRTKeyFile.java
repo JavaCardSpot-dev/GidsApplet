@@ -88,11 +88,9 @@ public class CRTKeyFile extends ElementaryFile {
             try {
                 innerPos = UtilTLV.findTag(fcp, innerPos, lenCRT, operation);
                 innerLen = UtilTLV.decodeLengthField(fcp, (short)(innerPos+1));
-            } catch (NotFoundException e) {
+            } catch (NotFoundException | InvalidArgumentsException e) {
                 throw NotFoundException.getInstance();
-            } catch (InvalidArgumentsException e) {
-                throw NotFoundException.getInstance();
-            }
+            } 
             try {
                 pos = UtilTLV.findTag(fcp, (short) (innerPos+2), innerLen, (byte) 0x80);
                 len = UtilTLV.decodeLengthField(fcp, (short)(pos+1));
