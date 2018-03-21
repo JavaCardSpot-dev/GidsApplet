@@ -1,3 +1,8 @@
+/*
+ * This class is for testing with / without access contol lists and contact only / contactless operations for 'mutual or external authentication only', 'pin authentication only', 
+ * 'pin authentication only or general authenticate', 'no authentication when it is allowed' and 'no authentication when it 
+ * is not allowed' cases by sending different data for key
+ */
 package com.mysmartlogon.gidsAppletTests;
 
 import javax.xml.bind.DatatypeConverter;
