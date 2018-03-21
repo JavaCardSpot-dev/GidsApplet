@@ -267,7 +267,11 @@ public class GidsApplet extends Applet {
     }
 
 
-
+    /* 
+     * Change the life-cycle of the application from 'operational' to 'terminated'
+     * when INS_TERMINATE_DF is set and (P1, P2) is equal to (0x00, 0x00)
+     * as well as an external authentication is verified
+     */
     private void processTerminateDF(APDU apdu) {
         byte[] buf = apdu.getBuffer();
         byte p1 = buf[ISO7816.OFFSET_P1];
@@ -493,7 +497,9 @@ public class GidsApplet extends Applet {
     }
 
 
-
+    /* 
+     * Send the public part of RSA key pair
+     */
     private void sendPublicKey(APDU apdu, PublicKey publicKey) throws InvalidArgumentsException, NotEnoughSpaceException {
 
         if (publicKey instanceof RSAPublicKey) {
