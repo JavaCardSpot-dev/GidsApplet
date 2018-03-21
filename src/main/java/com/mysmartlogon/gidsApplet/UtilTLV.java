@@ -258,10 +258,7 @@ public class UtilTLV {
             i++;
         }
         // check if the loop stopped because of 0xxxxxxx or an error
-        if (((short) (offset + i + 1) <= length) && (tag[(short) (offset+i)] == value[i])) {
-            return true;
-        }
-        return false;
+        return ((short) (offset + i + 1) <= length) && (tag[(short) (offset + i)] == value[i]);
     }
 
     /* input data is supposed to have been validaded before */
