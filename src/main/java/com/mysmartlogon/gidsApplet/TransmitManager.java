@@ -68,6 +68,7 @@ public class TransmitManager {
 
     }
 
+    // Clear RAM Buffer by making it 0x00 and set cache index & parameters to 0(Zero)
     private void Clear(boolean buffer) {
         if (buffer) {
             Util.arrayFillNonAtomic(ram_buf, (short)0, RAM_BUF_SIZE, (byte)0x00);
@@ -80,19 +81,23 @@ public class TransmitManager {
         chaining_object[PUT_DATA_OBJECT] = null;
     }
 
+    // Return the RAM Buffer
     public byte[] GetRamBuffer() {
         return ram_buf;
     }
     
+    // Return Flash Memory Buffer
     public byte[] GetFlashBuffer()
     {
         return flash_buf;
     }
 
+    // Clears the RAM Buffer by calling Clear() with true flag
     public void ClearRamBuffer() {
         Clear(true);
     }
     
+    // Clear Flash Memory if not already NUll and delete the object if it supported, otherwise fill it with 0x00.
     public void ClearFlashBuffer() {
         if (flash_buf != null)
         {
@@ -122,6 +127,8 @@ public class TransmitManager {
         return ((byte)(buf[0] & (byte)0x10) == (byte)0x10);
     }
 
+    // This function reads the APDU command and chaining check and initialization 
+    // RAM_CHAINING_CACHE_OFFSET_CURRENT_INS
     public void processChainInitialization(APDU apdu) {
         byte buffer[] = apdu.getBuffer();
         byte ins = buffer[ISO7816.OFFSET_INS];
@@ -166,6 +173,7 @@ public class TransmitManager {
             // clear the buffer
             Clear(true);
         }
+        // if instruction is not INS_PUT_DATA then clear cache.
         if (ins != GidsApplet.INS_PUT_DATA) {
             clearCachedRecord();
         }
@@ -186,6 +194,7 @@ public class TransmitManager {
         return doChainingOrExtAPDUWithBuffer(apdu, ram_buf, RAM_BUF_SIZE);
     }
     
+    // Be careful while writing to FLASH, as it is permanent
     public short doChainingOrExtAPDUFlash(APDU apdu) throws ISOException {
         // allocate flash buffer only when needed - it can remain for the rest of the card life
         if (flash_buf == null)
@@ -353,8 +362,9 @@ public class TransmitManager {
         sendData(apdu);
     }
 
+    // To send the data from RAM Buffer with given offset and length
     public void sendDataFromRamBuffer(APDU apdu, short offset, short length) {
-        Clear(false);
+        Clear(false);   // Do not clear the RAM Buffer, only set cache index & parameters to 0(Zero)
         chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS] = offset;
         chaining_cache[RAM_CHAINING_CACHE_OFFSET_BYTES_REMAINING] = length;
         sendData(apdu);
