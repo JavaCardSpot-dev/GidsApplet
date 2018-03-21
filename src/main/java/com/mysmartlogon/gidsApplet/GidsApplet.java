@@ -179,52 +179,83 @@ public class GidsApplet extends Applet {
         }
 
         transmitManager.processChainInitialization(apdu);
+        
+        // Instructions and their applications according to APDU receieved
 
         if((buffer[ISO7816.OFFSET_CLA] & 0xE0) == 0) {
             switch (ins) {
-            case INS_ACTIVATE_FILE: // Change the file state from creation to operational states
+            // Change the file state from creation to operational states
+            case INS_ACTIVATE_FILE:
                 fs.processActivateFile(apdu);
                 break;
-            case INS_CREATE_FILE: // Create an elementary file (EF) under the current application (DF)
+                    
+            // Create an elementary file (EF) under the current application (DF)
+            case INS_CREATE_FILE: 
                 fs.processCreateFile(apdu);
                 break;
-            case INS_CHANGE_REFERENCE_DATA: // Change card password conditionally
+                    
+            // Change card password conditionally
+            case INS_CHANGE_REFERENCE_DATA: 
                 pinManager.processChangeReferenceData(apdu);
                 break;
-            case INS_DELETE_FILE: // Delete selected file
+                    
+            // Delete selected file
+            case INS_DELETE_FILE: 
                 fs.processDeleteFile(apdu);
                 break;
-            case INS_GENERAL_AUTHENTICATE: // // Perform external, internal or mutual authentication
+                    
+            // Perform external, internal or mutual authentication
+            case INS_GENERAL_AUTHENTICATE: 
                 pinManager.processGeneralAuthenticate(apdu);
                 break;
-            case INS_GENERATE_ASYMMETRIC_KEYPAIR: // Generate asymmetric keypair for RSA or ECC, and store them
+                    
+            // Generate asymmetric keypair for RSA or ECC, and store them
+            case INS_GENERATE_ASYMMETRIC_KEYPAIR: 
                 processGenerateAsymmetricKeypair(apdu);
                 break;
-            case INS_GET_DATA: // Retrieve the data content of data object with the same tag as given in data field
+                    
+            // Retrieve the data content of data object (DO) with the same tag as given in data field
+            case INS_GET_DATA: 
                 processGetData(apdu);
                 break;
-            case INS_GET_RESPONSE: // Return the value of response returned by command
+                    
+            // Return the value of response returned by command
+            case INS_GET_RESPONSE: 
                 transmitManager.processGetResponse(apdu);
                 break;
-            case INS_MANAGE_SECURITY_ENVIRONMENT:
+                    
+            // Prepare INS_GENERAL_AUTHENTICATE and INS_PERFORM_SECURITY_OPERATION commands
+            case INS_MANAGE_SECURITY_ENVIRONMENT: 
                 processManageSecurityEnvironment(apdu);
                 break;
-            case INS_PERFORM_SECURITY_OPERATION:
+                    
+            // Compute checksum/digital signature, calculate hash-code, verify checksum/digital signature, encrypt or decrypt        
+            case INS_PERFORM_SECURITY_OPERATION: 
                 processPerformSecurityOperation(apdu);
                 break;
-            case INS_PUT_DATA:
+                    
+            // Create or replace the contents of a single data object in the current application
+            case INS_PUT_DATA: 
                 processPutData(apdu);
                 break;
-            case INS_RESET_RETRY_COUNTER:
+                    
+            // Reset the reference data entry counter to its iniitial value      
+            case INS_RESET_RETRY_COUNTER: 
                 pinManager.processResetRetryCounter(apdu);
                 break;
-            case ISO7816.INS_SELECT:
+                    
+            // Select an application by using its application ID (AID)        
+            case ISO7816.INS_SELECT: 
                 fs.processSelectFile(apdu, selectingApplet());
                 break;
-            case INS_TERMINATE_DF:
+                    
+            // Terminate the current application       
+            case INS_TERMINATE_DF: 
                 processTerminateDF(apdu);
                 break;
-            case INS_VERIFY:
+                    
+            // Compare the stored data in the card with the reference data of verification data from interface        
+            case INS_VERIFY: 
                 pinManager.processVerify(apdu);
                 break;
             default:
