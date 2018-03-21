@@ -36,27 +36,32 @@ import javacard.security.RSAPublicKey;
 
 /**
  * \brief class used to store key file
+ * \Control Reference Template (CRT) KeyFle class extends the ElementaryFile class, which is extended from File Class.
+ * \ 
  */
 public class CRTKeyFile extends ElementaryFile {
 
-    private final short posCRT;
-    private final short lenCRT;
+    private final short posCRT;     // Position of Control Reference Template (CRT)
+    private final short lenCRT;     // Length of Control Reference Template (CRT)
 
-    private KeyPair keyPair = null;
-    private byte[] symmetricKey = null;
+    private KeyPair keyPair = null;         // KeyPair 
+    private byte[] symmetricKey = null;     // Symmetric Key for ...
 
+    // Constructor of the class with four arguments
     public CRTKeyFile(short fileID, byte[] fileControlInformation, short pos, short len) {
         super(fileID, fileControlInformation);
         posCRT = pos;
         lenCRT = len;
     }
 
+    // This function checks the length and throw an excption InvalidArgumentException if length is not in the specific range
     public static void CheckCRT(byte[] fcp, short pos, short len) throws InvalidArgumentsException {
         if (len < 11 || len > 127) {
             throw InvalidArgumentsException.getInstance();
         }
     }
 
+    // This function clears the contents of symmetric Key, Key Pair for ensuring security in other operations
     void clearContents() {
         if (symmetricKey != null) {
             symmetricKey = null;
@@ -70,15 +75,18 @@ public class CRTKeyFile extends ElementaryFile {
         }
     }
 
+    // This function update/save the KeyPair with the given keyPair
     public void SaveKey(KeyPair kp) {
         clearContents();
         keyPair = kp;
     }
 
+    // This function return the KeyPair
     public KeyPair GetKey() {
         return keyPair;
     }
 
+    // This function search for the operation tag and check usage
     public void CheckUsage(byte operation, byte algRef) throws NotFoundException {
         short innerPos = (short) (posCRT+2), pos = 0;
         short innerLen = 0, len = 0;
@@ -118,6 +126,7 @@ public class CRTKeyFile extends ElementaryFile {
         }
     }
 
+    // This function checks and proceeds if the A5 tag if found, checks for the key reference and keytype
     public void importKey(byte[] buffer, short offset, short length) throws InvalidArgumentsException {
         // focused on A5 tag
         short innerPos = 0, innerLen = 0;
@@ -129,9 +138,11 @@ public class CRTKeyFile extends ElementaryFile {
             throw InvalidArgumentsException.getInstance();
         }
 
+        // compute the parameters from the buffer
         innerPos = (short) (offset + 1 + UtilTLV.getLengthFieldLength(buffer, (short) (offset+1)));
         innerLen = UtilTLV.decodeLengthField(buffer, (short) (offset+1));
 
+        //position, length and keytype are computed from the buffer with 0x83
         try {
             pos = UtilTLV.findTag(buffer, innerPos, innerLen, (byte) 0x83);
             len = UtilTLV.decodeLengthField(buffer, (short)(pos+1));
@@ -144,6 +155,7 @@ public class CRTKeyFile extends ElementaryFile {
         } catch (InvalidArgumentsException e) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
+        // position, length and key reference are computed with 0x84
         try {
             pos = UtilTLV.findTag(buffer, innerPos, innerLen, (byte) 0x84);
             len = UtilTLV.decodeLengthField(buffer, (short)(pos+1));
@@ -161,6 +173,7 @@ public class CRTKeyFile extends ElementaryFile {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
 
+        // Depending upon the keyType call different function for the symmetric key(1) and RSA key(2).
         try {
             pos = UtilTLV.findTag(buffer, innerPos, innerLen, (byte) 0x87);
             len = UtilTLV.decodeLengthField(buffer, (short)(pos+1));
@@ -179,6 +192,7 @@ public class CRTKeyFile extends ElementaryFile {
 
     }
 
+    // RSA keys are generated (Private & Public Keys)
     private void importRsaKey(byte[] buffer, short offset, short length) throws InvalidArgumentsException {
 
         short pos = offset;
@@ -310,6 +324,7 @@ public class CRTKeyFile extends ElementaryFile {
         rsaPrKey.setPQ(buffer, pos, len);
         pos += len;
 
+        // Clear the buffer after the RSA key generation is complete and it is valid/usable.
         if(rsaPrKey.isInitialized()) {
             // If the key is usable, it MUST NOT remain in buf.
             Util.arrayFillNonAtomic(buffer, offset, length, (byte)0x00);
