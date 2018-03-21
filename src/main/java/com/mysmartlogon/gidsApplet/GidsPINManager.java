@@ -116,7 +116,8 @@ public class GidsPINManager {
         return true;
     }
 
-    
+   // This function checks the type of authentication is either of CheckExternal Or MutualAuthentication using 
+   // state of admin authentication if it is already in initialization mode, if yes retun TRUE else false
     private boolean CheckExternalOrMutualAuthentication() {
         if (!isInInitializationMode) {
             if (status[0] != EXTERNAL_AUTHENTICATED && status[0] != MUTUAL_AUTHENTICATED) {
@@ -126,13 +127,18 @@ public class GidsPINManager {
         return true;
     }
 
+    // Sets the crt in the Key Reference from the Control Reference Template 
     public void SetKeyReference(CRTKeyFile crt) {
         KeyReference[0] = crt;
     }
 
 
     /**
-     * \brief throw a SW_SECURITY_STATUS_NOT_SATISFIED exception if not allowed
+     * \
+     // This function CheckACL checks the value of acl, and accordingly put restriction or no restriction.
+     // If neither of above case, it will check for the value of acl for type of operation i.e. contact or contactless
+     // After checking the type of operation the type of Authentication required: may be PIN or external (Mutual Authentication)
+     // Which is mandatory or not. In all these cases throws an SW_SECURITY_STATUS_NOT_SATISFIED exception if not allowed.
      */
     public void CheckACL(byte acl) {
         if(acl == (byte) 0x00) { // No restrictions.
@@ -208,12 +214,14 @@ public class GidsPINManager {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
 
+        // Deauthenticate PIN if the OFFSET_P2 is 0x82
         if (buf[ISO7816.OFFSET_P2] == (byte) 0x82) {
             // special resetting code for GIDS
             DeauthenticateAllPin();
             return;
         }
 
+        // Try to get the PIN frm the APDU buffer otherwise throw exception SW_REFERENCE_DATA_NOT_FOUND
         try {
             pin = GetPINByReference(buf[ISO7816.OFFSET_P2]);
         } catch(NotFoundException e) {
@@ -221,7 +229,7 @@ public class GidsPINManager {
         }
 
         lc = apdu.setIncomingAndReceive();
-
+        // Check the Number of tries remaining if all tries are over then throw SW_FILE_INVALID exception.
         if (pin.getTriesRemaining() == (byte) 0) {
             // pin blocked
             ISOException.throwIt(ISO7816.SW_FILE_INVALID);
@@ -382,17 +390,18 @@ public class GidsPINManager {
 
     /**
      * \brief Process the general authentication process
+         
      */
     public void processGeneralAuthenticate(APDU apdu) {
         byte[] buf = apdu.getBuffer();
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
         short lc;
-
+        // Check whether in Initialization Mode then throw SW_COMMAND_NOT_ALLOWED 
         if(isInInitializationMode) {
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
         }
-
+        // followed by the correctness of P1P2 otherwise SW_INCORRECT_P1P2
         if(p1 != (byte) 0x00 || p2 != (byte) 0x00 ) {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
@@ -400,12 +409,13 @@ public class GidsPINManager {
         // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
 
+        // Check DATA is valid or not 
         short innerPos = 0, innerLen = 0;
         if (buf[ISO7816.OFFSET_CDATA] != (byte) 0x7C) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
 
-
+        // Try to get the length and position from the APDU
         try {
             innerLen = UtilTLV.decodeLengthField(buf, (short) (ISO7816.OFFSET_CDATA+1));
             innerPos = (short) (ISO7816.OFFSET_CDATA + 1 + UtilTLV.getLengthFieldLength(buf, (short) (ISO7816.OFFSET_CDATA+1)));
@@ -414,6 +424,7 @@ public class GidsPINManager {
         }
 
         // inner functions never return if their input tag is found
+        // Check for External Challenge followed by challenge response, if any of them is successful, authentication is done otherwise
         if (CheckForExternalChallenge(apdu, buf, innerPos, innerLen)) {
             return;
         }
@@ -425,6 +436,7 @@ public class GidsPINManager {
 
     /**
      * \brief clear the data used for admin authentication
+     // For Security, we have to clear all the field by putting/assigning 0 (Zero) 
      */
     private void ClearChallengeData() {
         Util.arrayFillNonAtomic(ExternalChallenge, (short) 0,   (short) ExternalChallenge.length, (byte)0x00);
@@ -582,6 +594,7 @@ public class GidsPINManager {
 
     /**
      * \brief return information regarding the PIN
+     // 
      */
     public void returnPINStatus(APDU apdu, short id) {
         byte[] buf = apdu.getBuffer();
@@ -595,7 +608,7 @@ public class GidsPINManager {
             pin = pin_pin;
             break;
         }
-
+       // APDU is generated with the status of PIN which include the number of tries remaining and the try limit.
         Util.setShort(buf, (short) 0, id);
         buf[2] = (byte) 0x06;
         buf[3] = (byte) 0x97;
