@@ -538,9 +538,7 @@ public class GidsFileSystem extends ApplicationFile {
             File fileToAdd = getSafeFile(buf, ISO7816.OFFSET_CDATA, lc); // getSafeFile performs permission checks.
             addFile(fileToAdd);
             selectFile(fileToAdd);
-        } catch (NotFoundException e) {
-            ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-        } catch (InvalidArgumentsException e) {
+        } catch (NotFoundException | InvalidArgumentsException e) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         } catch(NotEnoughSpaceException e) {
             ISOException.throwIt(ISO7816.SW_FILE_FULL);
