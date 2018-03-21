@@ -110,14 +110,17 @@ public class GidsApplet extends Applet {
 
         // by default the pin manager is in "initialization mode"
         pinManager = new GidsPINManager();
-
+    
         transmitManager = new TransmitManager();
 
         currentAlgorithmRef = JCSystem.makeTransientByteArray((short)1, JCSystem.CLEAR_ON_DESELECT);
         currentKey = JCSystem.makeTransientObjectArray((short)1, JCSystem.CLEAR_ON_DESELECT);
 
+        // Cipher algorithm ALG_RSA_PKCS1 provides a cipher using RSA, and pads input data according to the PKCS#1 (v1.5) scheme.
         rsaPkcs1Cipher = Cipher.getInstance(Cipher.ALG_RSA_PKCS1, false);
         try {
+            // Cipher algorithm ALG_RSA_PKCS1_OAEP provides a cipher using RSA, and 
+            // pads input data according to the PKCS#1-OAEP scheme (IEEE 1363-2000).
             rsaOaepCipher = Cipher.getInstance(Cipher.ALG_RSA_PKCS1_OAEP, false);
         } catch (CryptoException e) {
             if(e.getReason() == CryptoException.NO_SUCH_ALGORITHM) {
@@ -126,6 +129,7 @@ public class GidsApplet extends Applet {
                 throw e;
             }
         }
+        // Cipher algorithm ALG_RSA_NOPAD provides a cipher using RSA and does not pad input data.
         rsaRawCipher = Cipher.getInstance(Cipher.ALG_RSA_NOPAD, false);
 
         byte mechanisms =  (byte) 0xC0;
@@ -156,9 +160,12 @@ public class GidsApplet extends Applet {
     }
 
     /**
-     * \brief This method is called whenever the applet is being deselected.
+     * \brief This method is called whenever the applet is being deselected to
+     * \deauthenticate admin key, Clear shared key, Reset KeyReferene and
+     *\ reset pin parameters to PIN_MAX_TRIES, PIN_MAX_LENGTH, PIN_MIN_LENGTH
      */
     public void deselect() {
+        // 
         pinManager.DeauthenticateAllPin();
     }
 
@@ -274,13 +281,16 @@ public class GidsApplet extends Applet {
      */
     private void processTerminateDF(APDU apdu) {
         byte[] buf = apdu.getBuffer();
+        // Get p1, p2 from the APDU
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
 
+        // Check the Correctness of p1-p2 of the APDU
         if (p1 != (byte) 0x00 || p2 != (byte) 0x00 ) {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
 
+        // Check the ACL permissions
         fs.CheckPermission(pinManager, File.ACL_OP_DF_TERMINATE);
         // kill me
         fs.setState(File.STATE_TERMINATED);
@@ -314,7 +324,9 @@ public class GidsApplet extends Applet {
                 } catch (NotFoundException e) {
                     ISOException.throwIt(ISO7816.SW_DATA_INVALID);
                 }
+                // Check permission for ACL Get Public Key
                 file.CheckPermission(pinManager, File.ACL_OP_KEY_GETPUBLICKEY);
+                // initialize public key 
                 PublicKey pk = file.GetKey().getPublic();
 
                 // Return pubkey. See ISO7816-8 table 3.
@@ -337,7 +349,7 @@ public class GidsApplet extends Applet {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
         } else if (p1 == 0x2F && p2 == (byte) 0x01) {
-            // EF.ATR
+            // EF.ATR  (Elementary File Answer To Reset)
             lc = apdu.setIncomingAndReceive();
 
             // check for EF.ATR request
@@ -450,7 +462,9 @@ public class GidsApplet extends Applet {
         } catch (NotFoundException e) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
+        // Check Permission for ACL Generate Asymetric Key
         file.CheckPermission(pinManager, File.ACL_OP_KEY_GENERATE_ASYMETRIC);
+        // try to Generate RSA KeyPair of Size 1024/2048 
         try {
             switch(algID) {
             case (byte)0x06:
@@ -907,6 +921,7 @@ public class GidsApplet extends Applet {
             } catch (Exception e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
+            
             try {
                 pos = UtilTLV.findTag(flash_buf, innerPos, innerLen, (byte) 0xA5);
                 len = UtilTLV.decodeLengthField(flash_buf, (short)(innerPos+1));
@@ -916,12 +931,12 @@ public class GidsApplet extends Applet {
             if(privKeyRef == -1) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
+            
             try {
                 crt = fs.findKeyCRT(privKeyRef);
             } catch (NotFoundException e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-    
             crt.CheckPermission(pinManager, File.ACL_OP_KEY_PUTKEY);
     
             try {
@@ -931,6 +946,7 @@ public class GidsApplet extends Applet {
             }
             // clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
             transmitManager.ClearFlashBuffer();
+            
         } catch(ISOException e) {
             if (e.getReason() != ISO7816.SW_NO_ERROR) {                
                 // clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
