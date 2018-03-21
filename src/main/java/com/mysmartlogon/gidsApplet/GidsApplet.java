@@ -97,6 +97,8 @@ public class GidsApplet extends Applet {
      * \param bLength
      *			the length in bytes of the parameter data in bArray
      */
+    
+    // Normally installed only once
     public static void install(byte[] bArray, short bOffset, byte bLength) {
         new GidsApplet();
     }
@@ -180,28 +182,28 @@ public class GidsApplet extends Applet {
 
         if((buffer[ISO7816.OFFSET_CLA] & 0xE0) == 0) {
             switch (ins) {
-            case INS_ACTIVATE_FILE:
+            case INS_ACTIVATE_FILE: // Change the file state from creation to operational states
                 fs.processActivateFile(apdu);
                 break;
-            case INS_CREATE_FILE:
+            case INS_CREATE_FILE: // Create an elementary file (EF) under the current application (DF)
                 fs.processCreateFile(apdu);
                 break;
-            case INS_CHANGE_REFERENCE_DATA:
+            case INS_CHANGE_REFERENCE_DATA: // Change card password conditionally
                 pinManager.processChangeReferenceData(apdu);
                 break;
-            case INS_DELETE_FILE:
+            case INS_DELETE_FILE: // Delete selected file
                 fs.processDeleteFile(apdu);
                 break;
-            case INS_GENERAL_AUTHENTICATE:
+            case INS_GENERAL_AUTHENTICATE: // // Perform external, internal or mutual authentication
                 pinManager.processGeneralAuthenticate(apdu);
                 break;
-            case INS_GENERATE_ASYMMETRIC_KEYPAIR:
+            case INS_GENERATE_ASYMMETRIC_KEYPAIR: // Generate asymmetric keypair for RSA or ECC, and store them
                 processGenerateAsymmetricKeypair(apdu);
                 break;
-            case INS_GET_DATA:
+            case INS_GET_DATA: // Retrieve the data content of data object with the same tag as given in data field
                 processGetData(apdu);
                 break;
-            case INS_GET_RESPONSE:
+            case INS_GET_RESPONSE: // Return the value of response returned by command
                 transmitManager.processGetResponse(apdu);
                 break;
             case INS_MANAGE_SECURITY_ENVIRONMENT:
