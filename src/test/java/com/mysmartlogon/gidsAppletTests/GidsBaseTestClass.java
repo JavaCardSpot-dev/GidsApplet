@@ -1,3 +1,7 @@
+/*
+ * This class is to create the succesfull commands and command chains to be used by other test initally.
+ */
+
 package com.mysmartlogon.gidsAppletTests;
 
 import static org.junit.Assert.*;
