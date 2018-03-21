@@ -103,9 +103,7 @@ public abstract class File {
         try {
             pos = UtilTLV.findTag(fcp, (short) 2, fcp[(short)1], (byte) 0x8C);
 
-        } catch (NotFoundException e) {
-            pos = -1;
-        } catch (InvalidArgumentsException e) {
+        } catch (NotFoundException | InvalidArgumentsException e) {
             pos = -1;
         }
         this.aclPos = pos;
