@@ -1,3 +1,8 @@
+/*
+ * This test class consists of tests for fuzzing and general replay attacks against the PIN authentication.
+ * It will be extended by PV204-Security Technologies students from Masaryk University
+ */
+
 package com.mysmartlogon.gidsAppletTests;
 
 import static org.junit.Assert.*;
