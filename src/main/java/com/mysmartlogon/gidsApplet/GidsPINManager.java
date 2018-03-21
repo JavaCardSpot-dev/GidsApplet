@@ -109,9 +109,7 @@ public class GidsPINManager {
     //This function check the User Authentication by first checking the Initialization Mode followed by the PIN validation
     private boolean CheckUserAuthentication() {
         if (!isInInitializationMode) {
-            if (!pin_pin.isValidated()) {
-                return false;
-            }
+            return pin_pin.isValidated();
         }
         return true;
     }
@@ -119,10 +117,8 @@ public class GidsPINManager {
    // This function checks the type of authentication is either of CheckExternal Or MutualAuthentication using 
    // state of admin authentication if it is already in initialization mode, if yes retun TRUE else false
     private boolean CheckExternalOrMutualAuthentication() {
-        if (!isInInitializationMode) {
-            if (status[0] != EXTERNAL_AUTHENTICATED && status[0] != MUTUAL_AUTHENTICATED) {
-                return false;
-            }
+         if (!isInInitializationMode) {
+            return status[0] == EXTERNAL_AUTHENTICATED || status[0] == MUTUAL_AUTHENTICATED;
         }
         return true;
     }
