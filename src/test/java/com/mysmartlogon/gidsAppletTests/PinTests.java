@@ -125,6 +125,30 @@ public class PinTests extends GidsBaseTestClass {
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
     }
+    
+    @Test
+    public void testPinTrialUpdate() {
+        // The number of trials is 3
+        // The number of trials must be updated to initial value = 3 
+        // after wrong PIN trials less than three times followed by a good PIN
+        
+        // bad PIN
+        execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C2);
+        execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701029301039000");
+        // good PIN
+        execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
+        execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
+        // bad PIN
+        execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C2);
+        execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701029301039000");
+        // bad PIN
+        execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C1);
+        execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701019301039000");
+        // good PIN
+        execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
+        execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");      
+    }
+    
 
     @Test
     public void testChangePIN() {
