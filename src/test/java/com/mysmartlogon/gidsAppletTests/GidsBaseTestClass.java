@@ -52,6 +52,7 @@ public abstract class GidsBaseTestClass {
         //display = false;
         execute("00A4040409A0000003974254465900");
 
+        // PIN 0x6C63
         execute("00240180083132333435363738");
 
         execute("00E000000E620C8201398302A0008C03033000");
