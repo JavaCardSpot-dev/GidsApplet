@@ -33,6 +33,7 @@ public class FileSystemTest extends GidsBaseTestClass {
         testPutKey(0x82, 0x6982);
         deauthenticate();
         authenticateGeneral();
+        // It will succeed only after authenticateGeneral()
         testPutKey(0x82, 0x9000);
         deauthenticate();
         //ACL: 10000111
@@ -49,6 +50,7 @@ public class FileSystemTest extends GidsBaseTestClass {
         testPutKey(0x83, 0x6982);
         deauthenticate();
         authenticatePin();
+        // It will succeed only after authenticatePin()
         testPutKey(0x83, 0x9000);
         deauthenticate();
 
@@ -64,6 +66,7 @@ public class FileSystemTest extends GidsBaseTestClass {
         testPutKey(0x84, 0x9000);
         deauthenticate();
         authenticateGeneral();
+        // It will succeed only after authenticateGeneral()
         testPutKey(0x84, 0x9000);
         deauthenticate();
 
@@ -79,6 +82,7 @@ public class FileSystemTest extends GidsBaseTestClass {
         testPutKey(0x85, 0x6982);
         deauthenticate();
         authenticateGeneral();
+        // It will not succeed neither with  authenticatePin() nor authenticateGeneral()
         testPutKey(0x85, 0x6982);
         deauthenticate();
 
@@ -89,6 +93,7 @@ public class FileSystemTest extends GidsBaseTestClass {
         // allowed
         // get data
         // never
+        // It will succeed with any of authenticatePin() or authenticateGeneral()
         authenticatePin();
         createKeyFile(0xB086, "87 00 00 FF");
         testPutKey(0x86, 0x9000);
@@ -111,6 +116,7 @@ public class FileSystemTest extends GidsBaseTestClass {
         testPutKey(0x87, 0x6982);
         deauthenticate();
         authenticatePin();
+        // It will succeed only after authenticatePin()
         testPutKey(0x87, 0x9000);
         deauthenticate();
 
@@ -126,10 +132,12 @@ public class FileSystemTest extends GidsBaseTestClass {
         testPutKey(0x88, 0x6982);
         deauthenticate();
         authenticateGeneral();
+        // It will succeed only after authenticateGeneral()
         testPutKey(0x88, 0x9000);
         deauthenticate();
 
         // no ACL
+        // It will succeed ithout acl as well as with any of authenticatePin() or authenticateGeneral()
         authenticatePin();
         execute("00E000001662148201188302B089A50BA4098001028301809501C0");
         execute("0044000000");
@@ -177,6 +185,7 @@ public class FileSystemTest extends GidsBaseTestClass {
         // create an empty DO
         // check empty
         execute("00CBA010045C02DF2400", 0x6a88);
+        // Note that 6a88 : Referenced key does not exist
         // create
         execute("00DBA01003DF240000");
         // check content
