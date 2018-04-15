@@ -75,6 +75,8 @@ public class GidsPINManager {
         buffer = JCSystem.makeTransientByteArray((short)40, JCSystem.CLEAR_ON_DESELECT);
         sharedKey = JCSystem.makeTransientByteArray((short)40, JCSystem.CLEAR_ON_DESELECT);
         status = JCSystem.makeTransientByteArray((short)1, JCSystem.CLEAR_ON_DESELECT);
+        // Initialization vector to be used in DES in CBC mode
+        IV = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
     }
 
     private GidsPIN GetPINByReference(byte reference) throws NotFoundException {
@@ -512,7 +514,9 @@ public class GidsPINManager {
                 ClearChallengeData();
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
-            Cipher cipherDES = Cipher.getInstance(Cipher.ALG_DES_CBC_NOPAD, false);
+         
+            // Now, the input data padded according to PCKS5 padding scheme
+            Cipher cipherDES = Cipher.getInstance(Cipher.ALG_DES_CBC_PKCS5, false);
             DESKey key = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
             key.setKey(((CRTKeyFile)(KeyReference[0])).GetSymmectricKey(), (short) 0);
 
@@ -566,7 +570,9 @@ public class GidsPINManager {
             apdu.setOutgoingLength((short)44);
             apdu.sendBytes((short) 0, (short)44);
         } else if (status[0] == EXTERNAL_CHALLENGE) {
-            Cipher cipherDES = Cipher.getInstance(Cipher.ALG_DES_CBC_NOPAD, false);
+         
+            // Now, the input data padded according to PCKS5 padding scheme
+            Cipher cipherDES = Cipher.getInstance(Cipher.ALG_DES_CBC_PKCS5, false);
             DESKey key = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
             key.setKey(((CRTKeyFile)(KeyReference[0])).GetSymmectricKey(), (short) 0);
 
