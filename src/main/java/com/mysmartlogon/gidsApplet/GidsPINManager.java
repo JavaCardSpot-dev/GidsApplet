@@ -64,6 +64,7 @@ public class GidsPINManager {
     private byte[] buffer = null;
     private byte[] sharedKey = null;
     private byte[] status = null;
+    private byte[] IV = null;
 
     // Constructor for setting default values for the variables of the instance GidsPIN
     // also specify the challenges, keys and status.
