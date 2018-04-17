@@ -133,6 +133,7 @@ public class GidsApplet extends Applet {
         rsaRawCipher = Cipher.getInstance(Cipher.ALG_RSA_NOPAD, false);
 
         byte mechanisms =  (byte) 0xC0;
+        // FCI / FMD / FCP are hard coded
         fs = new GidsFileSystem(pinManager, transmitManager, (short) 0x3F00,
                                 // FCP
                                 new byte[]	{
@@ -155,7 +156,8 @@ public class GidsApplet extends Applet {
                                 }
                                );
 
-        // FCI / FMD / FCP are hard coded
+        // Enabling initialization mode
+        pinManager.SetApplicationState(GidsPINManager.INITIALIZATION_STATE);
         register();
     }
 
@@ -292,6 +294,7 @@ public class GidsApplet extends Applet {
 
         // Check the ACL permissions
         fs.CheckPermission(pinManager, File.ACL_OP_DF_TERMINATE);
+        pinManager.SetApplicationState(GidsPINManager.TERMINATION_STATE);
         // kill me
         fs.setState(File.STATE_TERMINATED);
     }
@@ -515,7 +518,6 @@ public class GidsApplet extends Applet {
      * Send the public part of RSA key pair
      */
     private void sendPublicKey(APDU apdu, PublicKey publicKey) throws InvalidArgumentsException, NotEnoughSpaceException {
-
         if (publicKey instanceof RSAPublicKey) {
             sendRSAPublicKey(apdu, (RSAPublicKey) publicKey);
         }

@@ -54,7 +54,4 @@ public class CryptoTest extends GidsBaseTestClass {
         // deauthenticate
         execute("00 20 00 82");
     }
-
-
-
 }

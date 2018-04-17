@@ -46,17 +46,23 @@ public class GidsPINManager {
     private static final byte PIN_MAX_TRIES = 3;
     private static final byte PIN_MIN_LENGTH = 4;
     private static final byte PIN_MAX_LENGTH = 16;
+    // CHALLENGE:
+    private static final short CHALLENGE_LENGTH = 16;
+    // Application lifecycle state
+    public static final byte CREATION_STATE = (byte)0x11;
+    public static final byte INITIALIZATION_STATE = (byte)0x22;
+    public static final byte OPERATIONAL_STATE = (byte)0x44;
+    public static final byte TERMINATION_STATE = (byte)0x88;
     // state for admin authentication
-    private static final byte ADMIN_NOT_AUTHENTICATED = 0;
-    private static final byte EXTERNAL_CHALLENGE = 1;
-    private static final byte MUTUAL_CHALLENGE = 2;
-    private static final byte EXTERNAL_AUTHENTICATED = 3;
-    private static final byte MUTUAL_AUTHENTICATED = 4;
+    private static final byte ADMIN_NOT_AUTHENTICATED = (byte)0x00;
+    private static final byte EXTERNAL_CHALLENGE = (byte)0x11;
+    private static final byte MUTUAL_CHALLENGE = (byte)0x22;
+    private static final byte EXTERNAL_AUTHENTICATED = (byte)0x44;
+    private static final byte MUTUAL_AUTHENTICATED = (byte)0x88;
 
     // an insance of GidsPIN Class
     private GidsPIN pin_pin = null;
-
-    private boolean isInInitializationMode = true;
+    private byte applicationState = CREATION_STATE;
 
     private byte[] ExternalChallenge = null;
     private byte[] CardChallenge = null;
@@ -64,20 +70,18 @@ public class GidsPINManager {
     private byte[] buffer = null;
     private byte[] sharedKey = null;
     private byte[] status = null;
-    private byte[] IV = null;
 
     // Constructor for setting default values for the variables of the instance GidsPIN
     // also specify the challenges, keys and status.
     public GidsPINManager() {
         pin_pin = new GidsPIN(PIN_MAX_TRIES, PIN_MAX_LENGTH, PIN_MIN_LENGTH);
-        ExternalChallenge = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
-        CardChallenge = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+        ExternalChallenge = JCSystem.makeTransientByteArray(CHALLENGE_LENGTH, JCSystem.CLEAR_ON_DESELECT);
+        CardChallenge = JCSystem.makeTransientByteArray(CHALLENGE_LENGTH, JCSystem.CLEAR_ON_DESELECT);
         KeyReference = JCSystem.makeTransientObjectArray((short)1, JCSystem.CLEAR_ON_DESELECT);
         buffer = JCSystem.makeTransientByteArray((short)40, JCSystem.CLEAR_ON_DESELECT);
         sharedKey = JCSystem.makeTransientByteArray((short)40, JCSystem.CLEAR_ON_DESELECT);
         status = JCSystem.makeTransientByteArray((short)1, JCSystem.CLEAR_ON_DESELECT);
-        // Initialization vector to be used in DES in CBC mode
-        IV = JCSystem.makeTransientByteArray((short)16, JCSystem.CLEAR_ON_DESELECT);
+        status[0] = ADMIN_NOT_AUTHENTICATED;
     }
 
     private GidsPIN GetPINByReference(byte reference) throws NotFoundException {
@@ -92,18 +96,175 @@ public class GidsPINManager {
         }
     }
 
-    // This function set the Initialization Mode depending upon the supplied input value.
-    public void SetInitializationMode(boolean value) {
-        isInInitializationMode = value;
-        if (!value) DeauthenticateAllPin();       
+    /**
+     * Checks if the current application state matches any of the required state(s).
+     * @param requiredState Either ADMIN_NOT_AUTHENTICATED, or one or several required state(s), to give several possible states use the OR operation.
+     * @return true if operation was successful, false otherwise
+     */
+    public boolean CheckAdminAuthenticationState (final byte requiredState) {
+        final byte authState = status[0];
+
+        // Check for no current authentication
+        if (requiredState == ADMIN_NOT_AUTHENTICATED) {
+            return authState == ADMIN_NOT_AUTHENTICATED;
+        }
+
+        // Check if admin authentication state is contained within required state(s)
+        if ((byte) (authState & requiredState) != authState) {
+            return false;
+        }
+
+        // Check if admin authentication state matches any known states exactly (trying to detect memory corruption)
+        switch (authState) {
+            case EXTERNAL_CHALLENGE:
+            case EXTERNAL_AUTHENTICATED:
+            case MUTUAL_CHALLENGE:
+            case MUTUAL_AUTHENTICATED:
+                return true;
+            default: // No known state matched! Something must be going wrong with the variable.
+                return false;
+        }
     }
 
-    // Deauthentication process reset the PIN. Also Clear the challengeData and Shared Key
+    /**
+     * Checks if the current application state matches any of the required state(s).
+     * @param requiredState One or several required state(s), to give several possible states use the OR operation
+     * @return true if operation was successful, false otherwise
+     */
+    public boolean CheckApplicationState (final byte requiredState) {
+        // Check if application state is contained within required state(s)
+        if ((byte) (applicationState & requiredState) != applicationState) {
+            return false;
+        }
+
+        // Check if application state matches any known states exactly (trying to detect memory corruption)
+        switch (applicationState) {
+            case CREATION_STATE:
+            case INITIALIZATION_STATE:
+            case OPERATIONAL_STATE:
+            case TERMINATION_STATE:
+                return true;
+            default: // No known state matched! Something must be going wrong with the variable.
+                return false;
+        }
+    }
+
+    /**
+     * Changes the current external/mutual authentication state. Only used internally.
+     * @param nextState Next state of the application
+     * @return true if operation was successful, false otherwise
+     */
+    private boolean SetAdminAuthenticationState (final byte nextState) {
+
+        // No further checks for deauthentication (we just clear the challenge data)
+        if (nextState == ADMIN_NOT_AUTHENTICATED) {
+            status[0] = ADMIN_NOT_AUTHENTICATED;
+            ClearChallengeData();
+            return true;
+        }
+
+        if (nextState == EXTERNAL_CHALLENGE) {
+            if (CheckAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED)) {
+                status[0] = EXTERNAL_CHALLENGE;
+                return true;
+            } else {
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+                return false;
+            }
+        }
+
+        if (nextState == EXTERNAL_AUTHENTICATED) {
+            if (CheckAdminAuthenticationState(EXTERNAL_CHALLENGE)) {
+                status[0] = EXTERNAL_AUTHENTICATED;
+                ClearChallengeData();
+                return true;
+            } else {
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+                return false;
+            }
+        }
+
+        if (nextState == MUTUAL_CHALLENGE) {
+            if (CheckAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED)) {
+                status[0] = MUTUAL_CHALLENGE;
+                return true;
+            } else {
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+                return false;
+            }
+        }
+
+        if (nextState == MUTUAL_AUTHENTICATED) {
+            if (CheckAdminAuthenticationState(MUTUAL_CHALLENGE)) {
+                status[0] = MUTUAL_AUTHENTICATED;
+                ClearChallengeData();
+                return true;
+            } else {
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+                return false;
+            }
+        }
+
+        // Something went wrong!
+        ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+        return false;
+    }
+
+    /**
+     * Changes the current state of the application.
+     * Some states can only be defined from a specific previous state. Throws an ISO security exception if specific state is not met.
+     * @param nextState Next state of the application
+     * @return true if operation was successful, false otherwise
+     */
+    public boolean SetApplicationState (final byte nextState) {
+
+        // Entering initialization state:
+        //  - The card can now accept external commands (such as read/write operations)
+        if (nextState == INITIALIZATION_STATE) {
+            if (CheckApplicationState(CREATION_STATE)) {
+                applicationState = INITIALIZATION_STATE;
+                return true;
+            } else {
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+                return false;
+            }
+        }
+
+        // Entering operational state:
+        //  - The card now requires authentication for external commands
+        //  - The card can now perform cryptographic operations
+        if (nextState == OPERATIONAL_STATE) {
+            if (CheckApplicationState(INITIALIZATION_STATE)) {
+                DeauthenticateAllPin(); // Make sure we get fully deauthenticated before changing state
+                applicationState = OPERATIONAL_STATE;
+                return true;
+            } else {
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+                return false;
+            }
+        }
+
+        // Entering termination state:
+        //  - The card no longer accepts cryptographic and write commands
+        if (nextState == TERMINATION_STATE) {
+            if (CheckApplicationState(OPERATIONAL_STATE)) {
+                applicationState = TERMINATION_STATE;
+                return true;
+            } else {
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+                return false;
+            }
+        }
+
+        // Something went wrong!
+        ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+        return false;
+    }
+
     public void DeauthenticateAllPin() {
         pin_pin.reset();
         // deauthenticate admin key
-        status[0] = ADMIN_NOT_AUTHENTICATED;
-        ClearChallengeData();
+        SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
         // clear shared key
         Util.arrayFillNonAtomic(sharedKey, (short) 0,   (short) sharedKey.length, (byte)0x00);
         KeyReference[0] = null;
@@ -111,26 +272,29 @@ public class GidsPINManager {
 
     //This function check the User Authentication by first checking the Initialization Mode followed by the PIN validation
     private boolean CheckUserAuthentication() {
-        if (!isInInitializationMode) {
-            return pin_pin.isValidated();
-        }
-        return true;
+        // No user authentication required during initialization mode
+        if (CheckApplicationState(INITIALIZATION_STATE))
+            return true;
+        if (pin_pin.isValidated())
+            return true;
+        return false;
     }
 
    // This function checks the type of authentication is either of CheckExternal Or MutualAuthentication using 
    // state of admin authentication if it is already in initialization mode, if yes retun TRUE else false
     private boolean CheckExternalOrMutualAuthentication() {
-         if (!isInInitializationMode) {
-            return status[0] == EXTERNAL_AUTHENTICATED || status[0] == MUTUAL_AUTHENTICATED;
-        }
-        return true;
+        // No external/mutual authentication required during initialization mode
+        if (CheckApplicationState(INITIALIZATION_STATE))
+            return true;
+        if (CheckAdminAuthenticationState((byte)(EXTERNAL_AUTHENTICATED | MUTUAL_AUTHENTICATED)))
+            return true;
+        return false;
     }
 
     // Sets the crt in the Key Reference from the Control Reference Template 
     public void SetKeyReference(CRTKeyFile crt) {
         KeyReference[0] = crt;
     }
-
 
     /**
      * \
@@ -241,12 +405,12 @@ public class GidsPINManager {
 
         // Caller asks if verification is needed.
         if(lc == 0) {
-            if (!isInInitializationMode) {
-                // Verification required, return remaining tries.
-                ISOException.throwIt((short)(ErrorCode.SW_PIN_TRIES_REMAINING | pin.getTriesRemaining()));
-            } else {
+            if (CheckApplicationState(INITIALIZATION_STATE)) {
                 // No verification required.
                 ISOException.throwIt(ISO7816.SW_NO_ERROR);
+            } else {
+                // Verification required, return remaining tries.
+                ISOException.throwIt((short)(ErrorCode.SW_PIN_TRIES_REMAINING | pin.getTriesRemaining()));
             }
         }
 
@@ -287,14 +451,15 @@ public class GidsPINManager {
             pin.CheckLength((byte) lc);
 
             // authentication not needed for the first pin set
-            if(!isInInitializationMode) {
+            if (!CheckApplicationState(INITIALIZATION_STATE)) {
                 if (!pin.isValidated()) {
                     ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
                 }
             }
+
             // Set PIN value
             pin.update(buf, ISO7816.OFFSET_CDATA, (byte)lc);
-            if(isInInitializationMode) {
+            if(CheckApplicationState(INITIALIZATION_STATE)) {
                 pin.resetAndUnblock();
             }
 
@@ -333,7 +498,7 @@ public class GidsPINManager {
         } else {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
-    }// end processChangeReferenceData()
+    } // end processChangeReferenceData()
 
 
 
@@ -355,9 +520,10 @@ public class GidsPINManager {
         short lc;
         GidsPIN pin = null;
 
-        if(isInInitializationMode) {
+        if(!CheckApplicationState((byte)(OPERATIONAL_STATE | TERMINATION_STATE))) {
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
         }
+
         if(p1 == (byte) 0x02) {
             // this suppose a previous authentication of the admin via
             // external or mutual authenticate
@@ -396,8 +562,8 @@ public class GidsPINManager {
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
         short lc;
-        // Check whether in Initialization Mode then throw SW_COMMAND_NOT_ALLOWED 
-        if(isInInitializationMode) {
+
+        if(!CheckApplicationState((byte)(OPERATIONAL_STATE | TERMINATION_STATE))) {
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
         }
         // followed by the correctness of P1P2 otherwise SW_INCORRECT_P1P2
@@ -441,7 +607,6 @@ public class GidsPINManager {
         Util.arrayFillNonAtomic(ExternalChallenge, (short) 0,   (short) ExternalChallenge.length, (byte)0x00);
         Util.arrayFillNonAtomic(CardChallenge, (short) 0,   (short) CardChallenge.length, (byte)0x00);
         Util.arrayFillNonAtomic(buffer, (short) 0,   (short) buffer.length, (byte)0x00);
-        Util.arrayFillNonAtomic(status, (short) 0,   (short) status.length, (byte)0x00);
     }
 
     /**
@@ -462,7 +627,8 @@ public class GidsPINManager {
         } catch (NotFoundException e) {
             return false;
         }
-        ClearChallengeData();
+
+        SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
 
         pos += 1 + UtilTLV.getLengthFieldLength(buf, (short)(pos+1));
         // challenge size = 16 => mutual authentication
@@ -470,11 +636,11 @@ public class GidsPINManager {
         if (len == (short)16) {
             Util.arrayCopyNonAtomic(buf, pos, ExternalChallenge, (short) 0, len);
             // generate a 16 bytes challenge
-            status[0] = MUTUAL_CHALLENGE;
+            SetAdminAuthenticationState(MUTUAL_CHALLENGE);
         } else if (len == 0) {
             // generate a 8 bytes challenge
             len = 8;
-            status[0] = EXTERNAL_CHALLENGE;
+            SetAdminAuthenticationState(EXTERNAL_CHALLENGE);
         } else {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
@@ -510,9 +676,9 @@ public class GidsPINManager {
         if (len > (short)40) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
-        if (status[0] == MUTUAL_CHALLENGE) {
+        if (CheckAdminAuthenticationState(MUTUAL_CHALLENGE)) {
             if (len != (short) 40) {
-                ClearChallengeData();
+                SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
          
@@ -525,16 +691,16 @@ public class GidsPINManager {
             cipherDES.doFinal(buf, pos, len, buffer, (short) 0);
 
             if (Util.arrayCompare(buffer, (short) 0, CardChallenge, (short) 0, (short) 16) != 0) {
-                ClearChallengeData();
+                SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
             if (Util.arrayCompare(buffer, (short) 16, ExternalChallenge, (short) 0, (short) 16) != 0) {
-                ClearChallengeData();
+                SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
             // check the padding of Z1 (7 bytes)
             if (buffer[(short)39] != (byte) 0x80) {
-                ClearChallengeData();
+                SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
             // copy Z1 for later use
@@ -545,11 +711,11 @@ public class GidsPINManager {
             randomData.generateData(sharedKey, (short) 7, (short) 7);
 
             // copy R1
-            Util.arrayCopy(ExternalChallenge, (short) 0, buffer, (short) 0, (short) 16);
+            Util.arrayCopy(ExternalChallenge, (short) 0, buffer, (short) 0, CHALLENGE_LENGTH);
             // copy R2
-            Util.arrayCopy(CardChallenge, (short) 0, buffer, (short) 16, (short) 16);
+            Util.arrayCopy(CardChallenge, (short) 0, buffer, CHALLENGE_LENGTH, CHALLENGE_LENGTH);
             // copy Z2
-            Util.arrayCopy(sharedKey, (short) 7, buffer, (short) 32, (short) 7);
+            Util.arrayCopy(sharedKey, (short) 7, buffer, (short) (CHALLENGE_LENGTH * 2), (short) 7);
             // set padding for Z2 (7 bytes)
             buffer[(short) 39] = (byte) 0x80;
 
@@ -563,14 +729,13 @@ public class GidsPINManager {
             buf[3] = (byte) 0x28;
             
             // avoid replay attack
-            ClearChallengeData();
-            status[0] = MUTUAL_AUTHENTICATED;
+            SetAdminAuthenticationState(MUTUAL_AUTHENTICATED);
 
             apdu.setOutgoing();
             apdu.setOutgoingLength((short)44);
             apdu.sendBytes((short) 0, (short)44);
-        } else if (status[0] == EXTERNAL_CHALLENGE) {
-         
+
+        } else if (CheckAdminAuthenticationState(EXTERNAL_CHALLENGE)) {
             Cipher cipherDES = Cipher.getInstance(Cipher.ALG_DES_CBC_NOPAD, false);
             DESKey key = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
             key.setKey(((CRTKeyFile)(KeyReference[0])).GetSymmectricKey(), (short) 0);
@@ -580,13 +745,12 @@ public class GidsPINManager {
             cipherDES.doFinal(buf, pos, len, buffer, (short) 0);
 
             if (Util.arrayCompare(buffer, (short) 0, CardChallenge, (short) 0, (short) 8) != 0) {
-                ClearChallengeData();
+                SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
 
             // avoid replay attack
-            ClearChallengeData();
-            status[0] = EXTERNAL_AUTHENTICATED;
+            SetAdminAuthenticationState(EXTERNAL_AUTHENTICATED);
         } else {
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
@@ -621,7 +785,5 @@ public class GidsPINManager {
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)9);
         apdu.sendBytes((short) 0, (short) 9);
-
     }
-
 }

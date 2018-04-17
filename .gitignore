@@ -8,6 +8,7 @@ simulator/out
 tester/build
 tester/out
 build
+log
 out
 
 *.class

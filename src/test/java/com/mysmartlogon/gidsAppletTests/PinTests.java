@@ -269,5 +269,4 @@ public class PinTests extends GidsBaseTestClass {
     public void bogusVerifyPin() {
         execute("00 2C 00 81 01 31", 0x6a86);
     }
-
 }

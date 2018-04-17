@@ -135,12 +135,12 @@ public abstract class GidsBaseTestClass {
         if (!successexpected)
         {
             if(responseAPDU.getSW() != 0x6982) {
-                fail("expected: " + Integer.toHexString(0x6982) + " but was: " + Integer.toHexString(response.getSW()));
+                fail("expected: " + Integer.toHexString(0x6982) + " but was: " + Integer.toHexString(responseAPDU.getSW()));
             }
             return;
         }
         if(responseAPDU.getSW() != 0x9000) {
-            fail("expected: " + Integer.toHexString(0x9000) + " but was: " + Integer.toHexString(response.getSW()));
+            fail("expected: " + Integer.toHexString(0x9000) + " but was: " + Integer.toHexString(responseAPDU.getSW()));
         }
         byte[] cardresponse = responseAPDU.getBytes();
         if (!Arrays.equals(Arrays.copyOfRange(cardresponse, 0, 4), new byte[] {0x7C,0x2A,(byte)0x82,0x28}))

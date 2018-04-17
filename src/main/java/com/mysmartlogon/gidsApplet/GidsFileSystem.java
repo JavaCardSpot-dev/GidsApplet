@@ -737,12 +737,10 @@ public class GidsFileSystem extends ApplicationFile {
 
         file.CheckPermission(pinManager, ACL_OP_EF_ACTIVATE);
 
-        file.setState(STATE_OPERATIONAL_ACTIVATED);
-
         if (file == this) {
-            pinManager.SetInitializationMode(false);
+            pinManager.SetApplicationState(GidsPINManager.OPERATIONAL_STATE);
         }
 
+        file.setState(STATE_OPERATIONAL_ACTIVATED);
     }
-
 }
