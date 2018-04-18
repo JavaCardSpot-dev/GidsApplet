@@ -327,8 +327,11 @@ public class CRTKeyFile extends ElementaryFile {
         // Clear the buffer after the RSA key generation is complete and it is valid/usable.
         if(rsaPrKey.isInitialized()) {
             // If the key is usable, it MUST NOT remain in buf.
+            // Clear Buffer of size length and fill it with 0x00
             Util.arrayFillNonAtomic(buffer, offset, length, (byte)0x00);
+            // clears the contents of symmetric Key, Private Key, Key Pair and delete object if not null
             clearContents();
+            // Create a new RSA KeyPair of Pub and Pri Keys
             this.keyPair = new KeyPair(rsaPuKey, rsaPrKey);
             if(JCSystem.isObjectDeletionSupported()) {
                 JCSystem.requestObjectDeletion();
@@ -340,6 +343,7 @@ public class CRTKeyFile extends ElementaryFile {
     }
 
     private void importSymetricKey(byte[] buffer, short offset, short length) {
+        // clears the contents of symmetric Key, Private Key, Key Pair and delete object if not null
         clearContents();
         byte[] key = new byte[length];
         Util.arrayCopyNonAtomic(buffer, offset, key, (short) 0, length);
