@@ -40,7 +40,7 @@ public class TransmitManager {
     private byte[] ram_buf = null;
     // Internal variables to do chaining
     private short[] chaining_cache = null;
-    // Store special object to returns or if null, use the ram buffer
+    // Store special object to returns or if null, use the RAM buffer
     private Object[] chaining_object = null;
 
     private byte[] flash_buf = null;
@@ -99,7 +99,7 @@ public class TransmitManager {
         Clear(true);
     }
     
-    // Clear flash memory if not already NUll and delete the object if it is supported, otherwise fill it with 0x00.
+    // Clear flash memory if not already NULL and delete the object if it is supported, otherwise fill it with 0x00.
     public void ClearFlashBuffer() {
         if (flash_buf != null)
         {
@@ -121,7 +121,7 @@ public class TransmitManager {
      *
      * \param apdu The apdu.
      *
-     * \return true If the apdu is the [1;last[ part of a command chain,
+     * \return true If the APDU is the [1;last[ part of a command chain,
      *			false if there is no chain or the apdu is the last part of the chain.
      */
     static boolean isCommandChainingCLA(APDU apdu) {
@@ -161,7 +161,7 @@ public class TransmitManager {
             } else if(chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_INS] != ins
                       || chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_P1P2] != p1p2) {
                 /* The current chain is not yet completed,
-                 * but an apdu not part of the chain had been received. */
+                 * but an APDU not part of the chain had been received. */
                 ISOException.throwIt(ErrorCode.SW_COMMAND_NOT_ALLOWED_GENERAL);
             } else if(!isCommandChainingCLA(apdu)) {
                 /* A chain is ending, set the current INS and P1P2 to zero to indicate that. */
@@ -182,13 +182,13 @@ public class TransmitManager {
     }
 
     /**
-     * \brief Receive the data sent by chaining or extended apdus and store it in ram_buf.
+     * \brief Receive the data sent by chaining or extended APDUs and store it in RAM buffer.
      *
      * This is a convienience method if large data has to be accumulated using command chaining
-     * or extended apdus. The apdu must be in the INITIAL state, i.e. setIncomingAndReceive()
+     * or extended apdus. The apdu must be in the initial state, i.e. setIncomingAndReceive()
      * might not have been called already.
      *
-     * \param apdu The apdu object in the initial state.
+     * \param apdu The APDU object in the initial state.
      *
      * \throw ISOException SW_WRONG_LENGTH
      */
@@ -196,7 +196,7 @@ public class TransmitManager {
         return doChainingOrExtAPDUWithBuffer(apdu, ram_buf, RAM_BUF_SIZE);
     }
     
-    // Be careful while writing to FLASH, as it is permanent
+    // Be careful while writing to flash, as it is permanent
     public short doChainingOrExtAPDUFlash(APDU apdu) throws ISOException {
         // Allocate flash buffer only when needed - it can remain for the rest of the card life
         if (flash_buf == null)
@@ -236,7 +236,7 @@ public class TransmitManager {
         } else {
             // Chain has ended or no chaining.
             // We did receive the data, everything is fine.
-            // Reset the current position in ram_buf.
+            // Reset the current position in RAM buffer.
             recvLen = (short) (recvLen + chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS]);
             chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS] = 0;
             return recvLen;
@@ -247,9 +247,9 @@ public class TransmitManager {
      * \brief Process the GET RESPONSE APDU (INS=C0).
      *
      * If there is content available in ram_buf that could not be sent in the last operation,
-     * the host should use this APDU to get the data. The data is cached in ram_buf.
+     * the host should use this APDU to get the data. The data is cached in RAM buffer.
      *
-     * \param apdu The GET RESPONSE apdu.
+     * \param apdu The GET RESPONSE APDU.
      *
      * \throw ISOException SW_CONDITIONS_NOT_SATISFIED, SW_UNKNOWN, SW_CORRECT_LENGTH.
      */
@@ -292,11 +292,11 @@ public class TransmitManager {
     }
 
     /**
-     * \brief Send the data from ram_buf, using either extended APDUs or GET RESPONSE.
+     * \brief Send the data from RAM buffer, using either extended APDUs or GET RESPONSE.
      *
      * \param apdu The APDU object, in STATE_OUTGOING state.
      *
-     * \param pos The position in ram_buf at where the data begins
+     * \param pos The position in RAM buffer at where the data begins
      *
      * \param len The length of the data to be sent. If zero, 9000 will be
      *            returned
@@ -336,7 +336,7 @@ public class TransmitManager {
         short sendLen = remaininglen > le ? le : remaininglen;
         apdu.setOutgoingLength(sendLen);
         apdu.sendBytesLong(data, pos, sendLen);
-        // the position when using Record[] is maintained by copyRecordsToRamBuf
+        // The position when using Record[] is maintained by copyRecordsToRamBuf
         if (chaining_object[CHAINING_OBJECT] == null || !(chaining_object[CHAINING_OBJECT] instanceof Record[])) {
             chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS]+= sendLen;
         }
