@@ -27,7 +27,7 @@ package com.mysmartlogon.gidsApplet;
 /**
  * \brief The abstract class ElementaryFile.
  *
- * It's main purpose is to be able to easily differentiate between EFs and DFs.
+ * Its main purpose is to be able to easily differentiate between EFs and DFs.
  */
 public abstract class ElementaryFile extends File {
     private byte shortFileID;
