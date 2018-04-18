@@ -43,7 +43,8 @@ public class GidsPIN extends OwnerPIN implements PIN {
     private byte maxPINSize = 0;        // Maximum PIN Size
     private byte tryLimit = 0;          // Maximum Limit for PIN Try
 
-    // Constructor with three arguments, which are declared above, It sets the values passed as argument.
+    // Constructor with three arguments, which are declared above
+    // It sets the values passed as argument.
     public GidsPIN(byte tryLimit, byte maxPINSize, byte minPINSize) {
         super(tryLimit, maxPINSize);
         this.maxPINSize = maxPINSize;
@@ -70,7 +71,7 @@ public class GidsPIN extends OwnerPIN implements PIN {
 
     /*
     // This function checks whether the length of PIN is outside of the Range ( minPINSize and maxPINSize), 
-    // and if yes throw an exception Wrong Length
+    // and if yes, throws an exception Wrong Length
     */
     public void CheckLength(byte len) {
         if (len < minPINSize || len > maxPINSize) {
