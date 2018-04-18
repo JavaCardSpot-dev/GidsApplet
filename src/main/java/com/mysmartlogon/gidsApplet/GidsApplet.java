@@ -243,7 +243,7 @@ public class GidsApplet extends Applet {
                 processPerformSecurityOperation(apdu);
                 break;
                     
-            // Create or replace the contents of a single data object in the current application
+            // Create or replace the content of a single data object in the current application
             case INS_PUT_DATA: 
                 processPutData(apdu);
                 break;
