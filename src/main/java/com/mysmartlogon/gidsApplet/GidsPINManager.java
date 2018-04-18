@@ -50,21 +50,21 @@ public class GidsPINManager {
     private static final byte PUK_MAX_TRIES = 3;
     private static final byte PUK_MIN_LENGTH = 4;
     private static final byte PUK_MAX_LENGTH = 16;
-    // CHALLENGE:
+    // Challenge:
     private static final short CHALLENGE_LENGTH = 16;
     // Application lifecycle state
     public static final byte CREATION_STATE = (byte)0x11;
     public static final byte INITIALIZATION_STATE = (byte)0x22;
     public static final byte OPERATIONAL_STATE = (byte)0x44;
     public static final byte TERMINATION_STATE = (byte)0x88;
-    // state for admin authentication
+    // State for admin authentication
     private static final byte ADMIN_NOT_AUTHENTICATED = (byte)0x00;
     private static final byte EXTERNAL_CHALLENGE = (byte)0x11;
     private static final byte MUTUAL_CHALLENGE = (byte)0x22;
     private static final byte EXTERNAL_AUTHENTICATED = (byte)0x44;
     private static final byte MUTUAL_AUTHENTICATED = (byte)0x88;
 
-    // an insance of GidsPIN Class
+    // An insance of GidsPIN Class
     private GidsPIN pin_pin = null;
     private GidsPIN puk_puk = null;
     private byte applicationState = CREATION_STATE;
@@ -77,7 +77,7 @@ public class GidsPINManager {
     private byte[] status = null;
 
     // Constructor for setting default values for the variables of the instance GidsPIN
-    // also specify the challenges, keys and status.
+    // also specifying the challenges, keys and status.
     public GidsPINManager() {
         pin_pin = new GidsPIN(PIN_MAX_TRIES, PIN_MAX_LENGTH, PIN_MIN_LENGTH);
         puk_puk = new GidsPIN(PUK_MAX_TRIES, PUK_MAX_LENGTH, PUK_MIN_LENGTH);
@@ -96,7 +96,7 @@ public class GidsPINManager {
         case (byte) 0x00:
             return pin_pin;
         case (byte) 0x81:
-        //no PUK on v2 of the card
+        // No PUK on v2 of the card
         default:
             throw NotFoundException.getInstance();
         }
@@ -282,9 +282,9 @@ public class GidsPINManager {
     public void DeauthenticateAllPin() {
         pin_pin.reset();
         puk_puk.reset();
-        // deauthenticate admin key
+        // Deauthenticate admin key
         SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
-        // clear shared key
+        // Clear shared key
         Util.arrayFillNonAtomic(sharedKey, (short) 0,   (short) sharedKey.length, (byte)0x00);
         KeyReference[0] = null;
     }
@@ -308,7 +308,7 @@ public class GidsPINManager {
         return CheckAdminAuthenticationState((byte) (EXTERNAL_AUTHENTICATED | MUTUAL_AUTHENTICATED));
     }
 
-    // Sets the crt in the Key Reference from the Control Reference Template 
+    // Sets the CRT in the Key Reference from the Control Reference Template 
     public void SetKeyReference(CRTKeyFile crt) {
         KeyReference[0] = crt;
     }
@@ -327,16 +327,16 @@ public class GidsPINManager {
             ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
         }
         byte SEID = (byte)(acl & (byte)0x0F);
-        // contact / contact less ACL
+        // Contact / contactless ACL
         if (SEID > 0) {
             byte protocol = (byte) (APDU.getProtocol() & APDU.PROTOCOL_MEDIA_MASK);
             if (SEID == 1) {
-                // contact operation
+                // Contact operation
                 if (protocol != APDU.PROTOCOL_MEDIA_USB && protocol != APDU.PROTOCOL_MEDIA_DEFAULT) {
                     ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
                 }
             } else if (SEID == 2) {
-                // contact less operation
+                // Contactless operation
                 if (protocol != APDU.PROTOCOL_MEDIA_CONTACTLESS_TYPE_A && protocol != APDU.PROTOCOL_MEDIA_CONTACTLESS_TYPE_B) {
                     ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
                 }
@@ -355,21 +355,21 @@ public class GidsPINManager {
             if (CheckUserAuthentication()) {
                 return;
             }
-            // else continue
+            // Else continue
         }
         if(authentication  == (byte) 0xA0) {
-            // external / mutual authentication mandatory
+            // External / mutual authentication mandatory
             if (CheckExternalOrMutualAuthentication()) {
                 return;
             }
             ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
         }
         if((authentication&(byte)0xA0) == (byte)0x20) {
-            // external or mutual authentication optional
+            // External or mutual authentication optional
             if (CheckExternalOrMutualAuthentication()) {
                 return;
             }
-            // else continue
+            // Else continue
         }
         ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
     }
@@ -410,7 +410,7 @@ public class GidsPINManager {
         }
 
         lc = apdu.setIncomingAndReceive();
-        // Check the Number of tries remaining if all tries are over then throw SW_FILE_INVALID exception.
+        // Check the number of tries remaining if all tries are over then throw SW_FILE_INVALID exception.
         if (pin.getTriesRemaining() == (byte) 0) {
             // pin blocked
             ISOException.throwIt(ISO7816.SW_FILE_INVALID);
@@ -470,7 +470,7 @@ public class GidsPINManager {
             // Check length.
             pin.CheckLength((byte) lc);
 
-            // authentication not needed for the first pin set
+            // Authentication not needed for the first pin set
             if (!CheckApplicationState(INITIALIZATION_STATE)) {
                 if (!pin.isValidated() && !puk.isValidated()) {
                     ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
@@ -498,13 +498,13 @@ public class GidsPINManager {
 
             byte currentPinLength = pin.GetCurrentPINLen();
             byte currentPukLength = puk.GetCurrentPINLen();
-            // if the current pin is very long and the tested pin is very short, force the verification to decreate the remaining try count
+            // If the current pin is very long and the tested pin is very short, force the verification to decreate the remaining try count
             // do not allow the revelation of currentPinLength until pin.check is done
             if (lc < currentPinLength) {
                 currentPinLength = (byte) lc;
             }
             if (pin.getTriesRemaining() == (byte) 0 && puk.getTriesRemaining() == (byte) 0 ) {
-                // pin blocked
+                // PIN blocked
                 ISOException.throwIt(ISO7816.SW_FILE_INVALID);
             }
             // Check the old PIN.
@@ -514,13 +514,13 @@ public class GidsPINManager {
             if(lc > (short)(pin.GetMaxPINSize() + currentPinLength) || lc < (short)(currentPinLength + pin.GetMinPINSize())) {
                 ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
             }
-            // UPDATE PIN
+            // Update PIN
             pin.update(buf, (short) (ISO7816.OFFSET_CDATA+currentPinLength), (byte) (lc - currentPinLength));
             pin.setAsAuthenticated();
         } else {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
-    } // end processChangeReferenceData()
+    } // End processChangeReferenceData()
 
 
 
@@ -547,10 +547,10 @@ public class GidsPINManager {
         }
 
         if(p1 == (byte) 0x02) {
-            // this suppose a previous authentication of the admin via
+            // This supposes a previous authentication of the admin via
             // external or mutual authenticate
             lc = apdu.setIncomingAndReceive();
-            // only P2 = 80 is specified
+            // Only P2 = 80 is specified
             if (p2 != (byte) 0x80) {
                 ISOException.throwIt(ErrorCode.SW_REFERENCE_DATA_NOT_FOUND);
             }
@@ -567,7 +567,7 @@ public class GidsPINManager {
             // Set PIN value
             pin.update(buf, ISO7816.OFFSET_CDATA, (byte)lc);
             pin.resetAndUnblock();
-            // admin is deauthenticated at the end of the process
+            // Admin is deauthenticated at the end of the process
             DeauthenticateAllPin();
         } else {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
@@ -588,7 +588,7 @@ public class GidsPINManager {
         if(!CheckApplicationState((byte)(OPERATIONAL_STATE | TERMINATION_STATE))) {
             ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
         }
-        // followed by the correctness of P1P2 otherwise SW_INCORRECT_P1P2
+        // Followed by the correctness of P1P2 otherwise SW_INCORRECT_P1P2
         if(p1 != (byte) 0x00 || p2 != (byte) 0x00 ) {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
@@ -610,8 +610,8 @@ public class GidsPINManager {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
 
-        // inner functions never return if their input tag is found
-        // Check for External Challenge followed by challenge response, if any of them is successful, authentication is done otherwise
+        // Inner functions never return if their input tag is found
+        // Check for external challenge followed by challenge response, if any of them is successful, authentication is done otherwise
         if (CheckForExternalChallenge(apdu, buf, innerPos, innerLen)) {
             return;
         }
@@ -622,7 +622,7 @@ public class GidsPINManager {
     }
 
     /**
-     * \brief clear the data used for admin authentication
+     * \brief Clear the data used for admin authentication
      // For Security, we have to clear all the field by putting/assigning 0 (Zero) 
      */
     private void ClearChallengeData() {
@@ -632,14 +632,14 @@ public class GidsPINManager {
     }
 
     /**
-     * \brief handle the first part of the general authenticate APDU
+     * \brief Handle the first part of the general authenticate APDU
      */
     private boolean CheckForExternalChallenge(APDU apdu, byte[] buf, short innerPos, short innerLen) {
         short pos = 0, len = 0;
         try {
             pos = UtilTLV.findTag(buf, innerPos, innerLen, (byte) 0x81);
             if (buf[(short) (pos+1)] == 0) {
-                // zero len TLV allowed
+                // Zero len TLV allowed
                 len = 0;
             } else {
                 len = UtilTLV.decodeLengthField(buf, (short)(pos+1));
@@ -653,14 +653,14 @@ public class GidsPINManager {
         SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
 
         pos += 1 + UtilTLV.getLengthFieldLength(buf, (short)(pos+1));
-        // challenge size = 16 => mutual authentication
-        // challenge size = 0 => external authentication, request for a challenge
+        // Challenge size = 16 => mutual authentication
+        // Challenge size = 0 => external authentication, request for a challenge
         if (len == (short)16) {
             Util.arrayCopyNonAtomic(buf, pos, ExternalChallenge, (short) 0, len);
-            // generate a 16 bytes challenge
+            // Generate a 16 bytes challenge
             SetAdminAuthenticationState(MUTUAL_CHALLENGE);
         } else if (len == 0) {
-            // generate a 8 bytes challenge
+            // Generate a 8 bytes challenge
             len = 8;
             SetAdminAuthenticationState(EXTERNAL_CHALLENGE);
         } else {
@@ -681,7 +681,7 @@ public class GidsPINManager {
     }
 
     /**
-     * \brief handle the second part of the general authenticate APDU
+     * \brief Handle the second part of the general authenticate APDU
      */
     private boolean CheckForChallengeResponse(APDU apdu, byte[] buf, short innerPos, short innerLen) {
         short pos = 0, len = 0;
@@ -708,7 +708,7 @@ public class GidsPINManager {
             DESKey key = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
             key.setKey(((CRTKeyFile)(KeyReference[0])).GetSymmectricKey(), (short) 0);
 
-            //decrypt message
+            // Decrypt message
             cipherDES.init(key, Cipher.MODE_DECRYPT);
             cipherDES.doFinal(buf, pos, len, buffer, (short) 0);
 
@@ -720,37 +720,37 @@ public class GidsPINManager {
                 SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
-            // check the padding of Z1 (7 bytes)
+            // Check the padding of Z1 (7 bytes)
             if (buffer[(short)39] != (byte) 0x80) {
                 SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
-            // copy Z1 for later use
+            // Copy Z1 for later use
             Util.arrayCopy(buffer, (short) 32, sharedKey, (short) 0, (short) 7);
 
-            // generate Z2
+            // Generate Z2
             RandomData randomData = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
             randomData.generateData(sharedKey, (short) 7, (short) 7);
 
-            // copy R1
+            // Copy R1
             Util.arrayCopy(ExternalChallenge, (short) 0, buffer, (short) 0, CHALLENGE_LENGTH);
-            // copy R2
+            // Copy R2
             Util.arrayCopy(CardChallenge, (short) 0, buffer, CHALLENGE_LENGTH, CHALLENGE_LENGTH);
-            // copy Z2
+            // Copy Z2
             Util.arrayCopy(sharedKey, (short) 7, buffer, (short) (CHALLENGE_LENGTH * 2), (short) 7);
-            // set padding for Z2 (7 bytes)
+            // Set padding for Z2 (7 bytes)
             buffer[(short) 39] = (byte) 0x80;
 
             cipherDES.init(key, Cipher.MODE_ENCRYPT);
             cipherDES.doFinal(buffer, (short) 0, (short)40, buf, (short) 4);
 
-            // header
+            // Header
             buf[0] = (byte) 0x7C;
             buf[1] = (byte) 0x2A;
             buf[2] = (byte) 0x82;
             buf[3] = (byte) 0x28;
             
-            // avoid replay attack
+            // Avoid replay attack
             SetAdminAuthenticationState(MUTUAL_AUTHENTICATED);
 
             apdu.setOutgoing();
@@ -762,7 +762,7 @@ public class GidsPINManager {
             DESKey key = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
             key.setKey(((CRTKeyFile)(KeyReference[0])).GetSymmectricKey(), (short) 0);
 
-            //decrypt message
+            // Decrypt message
             cipherDES.init(key, Cipher.MODE_DECRYPT);
             cipherDES.doFinal(buf, pos, len, buffer, (short) 0);
 
@@ -771,7 +771,7 @@ public class GidsPINManager {
                 ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
             }
 
-            // avoid replay attack
+            // Avoid replay attack
             SetAdminAuthenticationState(EXTERNAL_AUTHENTICATED);
         } else {
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
@@ -780,7 +780,7 @@ public class GidsPINManager {
     }
 
     /**
-     * \brief return information regarding the PIN
+     * \brief Return information regarding the PIN
      // 
      */
     public void returnPINStatus(APDU apdu, short id) {
