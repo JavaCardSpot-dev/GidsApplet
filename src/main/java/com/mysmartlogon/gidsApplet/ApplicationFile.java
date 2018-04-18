@@ -72,7 +72,7 @@ public class ApplicationFile extends DedicatedFile {
         try {
             aidlen = UtilTLV.decodeLengthField(fileControlInformation, (short)(namePos+1));
             if (aidlen < length) {
-                // aid len to check is to big to match
+                // Aid len to check is too big to match
                 return false;
             }
         } catch (InvalidArgumentsException e) {
@@ -84,7 +84,7 @@ public class ApplicationFile extends DedicatedFile {
         } catch(InvalidArgumentsException e) {
             return false;
         }
-        // check if the name can be a part of the AID
+        // Check if the name can be a part of the AID
         for (i = 0; i < (short)(aidlen - length +1); i++) {
             if ((byte)0 == Util.arrayCompare(name, offset, fileControlInformation, (short)(namePos + i), length) ) {
                 return true;
