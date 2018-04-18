@@ -152,6 +152,7 @@ public class DedicatedFile extends File {
             throw NotFoundException.getInstance();
         }
 
+        // If the Object Deletion is not Supported then Clear its Contents to avoid misuse
         if( ! JCSystem.isObjectDeletionSupported()) {
             // Old file will stay as garbage in the EEPROM - at least clear the contents.
             children[childNum].clearContents();
