@@ -275,9 +275,7 @@ public class GidsPINManager {
         // No user authentication required during initialization mode
         if (CheckApplicationState(INITIALIZATION_STATE))
             return true;
-        if (pin_pin.isValidated())
-            return true;
-        return false;
+        return pin_pin.isValidated();
     }
 
    // This function checks the type of authentication is either of CheckExternal Or MutualAuthentication using 
@@ -286,9 +284,7 @@ public class GidsPINManager {
         // No external/mutual authentication required during initialization mode
         if (CheckApplicationState(INITIALIZATION_STATE))
             return true;
-        if (CheckAdminAuthenticationState((byte)(EXTERNAL_AUTHENTICATED | MUTUAL_AUTHENTICATED)))
-            return true;
-        return false;
+        return CheckAdminAuthenticationState((byte) (EXTERNAL_AUTHENTICATED | MUTUAL_AUTHENTICATED));
     }
 
     // Sets the crt in the Key Reference from the Control Reference Template 
