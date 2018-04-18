@@ -31,7 +31,7 @@ import javacard.framework.ISOException;
  * \brief The File class acting as superclass for any file.
  */
 public abstract class File {
-    // Unique File ID for each file
+    // Unique file ID for each file
     private final short fileID;
     private DedicatedFile parentDF;
 
@@ -95,7 +95,7 @@ public abstract class File {
         // Save the position of the ACL (Value field) in the FCI for performance reasons.
         // If the position is -1, then every action may be performed.
 
-        // try the following tag by order
+        // Try the following tag by order
         // tag 0x86 = security attribute in proprietary format
         // tag 0x8C = compact format
 
@@ -125,40 +125,40 @@ public abstract class File {
     public void CheckPermission(GidsPINManager pinManager, byte flag_operation) {
         if (state == STATE_CREATION) {
             if (this instanceof ApplicationFile) {
-                // every operation is allowed on the application on the creation state
+                // Every operation is allowed on the application on the creation state
                 return;
             }
             if (this instanceof ElementaryFile) {
-                // only a transition to operational state is allowed
+                // Only a transition to operational state is allowed
                 if (flag_operation != ACL_OP_EF_ACTIVATE) {
                     ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
                 }
             }
             if (this instanceof DedicatedFile) {
-                // only a transition to operational state is allowed
+                // Only a transition to operational state is allowed
                 if (flag_operation != ACL_OP_DF_ACTIVATE) {
                     ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
                 }
             }
         } else if (state == STATE_TERMINATED) {
             if (this instanceof ApplicationFile) {
-                // every operation is denied on the application on the termination state
+                // Every operation is denied on the application on the termination state
                 ISOException.throwIt(ErrorCode.SW_TERMINATION_STATE);
             }
             if (this instanceof ElementaryFile) {
-                // only a transition to operational state is allowed
+                // Only a transition to operational state is allowed
                 if (flag_operation != ACL_OP_EF_DELETE) {
                     ISOException.throwIt(ErrorCode.SW_TERMINATION_STATE);
                 }
             }
             if (this instanceof DedicatedFile) {
-                // only a transition to operational state is allowed
+                // Only a transition to operational state is allowed
                 if (flag_operation != ACL_OP_DF_DELETE_SELF) {
                     ISOException.throwIt(ErrorCode.SW_TERMINATION_STATE);
                 }
             }
         }
-        // Check ACL Requirements if any of the operation is allowed 
+        // Check ACL requirements if any of the operation is allowed 
         CheckACLRequirements(pinManager, flag_operation);
     }
 
@@ -172,11 +172,11 @@ public abstract class File {
         if(aclPos == -1) {
             return; // Any operation is allowed if there is no ACL.
         }
-        // if ACL Position is not -1, then get the Access Mode and index from file Control Parameter
+        // if ACL Position is not -1, then get the access mode and index from file control parameter
         byte accessmod = fcp[(short)(aclPos+2)];
         short index = (short)(aclPos+2);
-        // check the type of Access Control Operations and accordingly check ACL and 
-        //whether card is contact or contacless followed by protocol and authentcation.
+        // Check the type of Access Control Operations and accordingly check ACL and 
+        // whether card is contact or contacless followed by protocol and authentcation.
         // 
         if ((accessmod & ACL_OP_40) != 0) {
             index++;
@@ -263,12 +263,12 @@ public abstract class File {
         return this.fcp;
     }
 
-    // return the state of the file.
+    // Return the state of the file.
     public final byte getState() {
         return state;
     }
 
-    // Sets the state of the file.
+    // Set the state of the file.
     public final void setState(byte state) {
         this.state = state;
     }
