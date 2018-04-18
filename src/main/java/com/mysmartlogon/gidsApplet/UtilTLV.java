@@ -189,7 +189,7 @@ public class UtilTLV {
         }
     }
 
-    /* returns 0 or the size of the BERTLV structure */
+    /* Return 0 or the size of the BERTLV structure */
     public static short CheckBERTLV(byte[] buf, short offset, short len) {
         short size = 0;
         short sizeforsize = 0;
@@ -197,27 +197,27 @@ public class UtilTLV {
         short totalsize = 0;
 
         if ((buf[offset] & 0x1F) == 0x1F) {
-            // tag start with all 5 last bits to 1
-            // skip the tag
+            // Tag start with all 5 last bits to 1
+            // Skip the tag
             while (((buf[(short) (offset + i)] & 0x80) != 0) && i < len) {
                 i++;
             }
-            // pass the last byte of the tag
+            // Pass the last byte of the tag
             i+=1;
         }
         
         if ((short) (i+1) >len) {
             return 0;
         }
-        // check the size
+        // Check the size
         if ((buf[(short) (offset + i)] & 0x80) != 0) {
-            // size encoded in many bytes
+            // The size is encoded in many bytes
             sizeforsize = (short) (buf[(short) (offset + i)] & 0x7F);
             if ((short) (i+1+sizeforsize) >len) {
                 return 0;
             }
             if (sizeforsize > (short) 2) {
-                // more than two bytes for encoding => not something than we can handle
+                // More than two bytes for encoding => not something that we can handle
                 return 0;
             } else if (sizeforsize == (short) 1) {
                 if ((short) (offset + i + 1 + sizeforsize) > len) {
@@ -232,7 +232,7 @@ public class UtilTLV {
                 size = Util.getShort(buf, (short) (offset + i + 1));
             }
         } else {
-            // size encode in one byte
+            // The size is encoded in one byte
             size = Util.makeShort((byte) 0,buf[(short) (offset + i)]);
         }
         totalsize = (short) (i + 1 + sizeforsize + size);
@@ -245,44 +245,44 @@ public class UtilTLV {
 
     public static boolean IsBERTLVTagEqual(byte[] tag, short offset, short length, byte[] value) {
         short i = 1;
-        // first byte contains the class description
+        // The first byte contains the class description
         if (tag[offset] != value[(short)0]) {
             return false;
         }
-        // simplified tag
+        // Simplified tag
         if ((value[(short) 0] & 0x1F ) != 0x1F) {
             return true;
         }
-        // subsequent bytes starts by 1xxxxxxx until the last byte 0xxxxxxx
+        // Subsequent bytes start by 1xxxxxxx until the last byte 0xxxxxxx
         while(((short) (offset + i) < length) && (tag[(short) (offset+i)] == value[i]) && ((value[i] & 0x80) != 0)) {
             i++;
         }
-        // check if the loop stopped because of 0xxxxxxx or an error
+        // Check if the loop stopped because of 0xxxxxxx or an error
         return ((short) (offset + i + 1) <= length) && (tag[(short) (offset + i)] == value[i]);
     }
 
-    /* input data is supposed to have been validaded before */
+    /* Input data is supposed to have been validaded before */
     public static short GetBERTLVDataLen(byte[] buf, short offset, short len) {
         short size = 0;
         short sizeforsize = 0;
         short i = 1;
 
         if ((buf[offset] & 0x1F) == 0x1F) {
-            // tag start with all 5 last bits to 1
-            // skip the tag
+            // Tag start with all 5 last bits to 1
+            // Skip the tag
             while (((buf[(short) (offset + i)] & 0x80) != 0) && ((short)(i+offset)) < len) {
                 i++;
             }
-            // pass the last byte of the tag
+            // Pass the last byte of the tag
             i+=1;
         }
         
-        // check the size
+        // Check the size
         if ((buf[(short) (offset + i)] & 0x80) != 0) {
-            // size encoded in many bytes
+            // The size is encoded in many bytes
             sizeforsize = (short) (buf[(short) (offset + i)] & 0x7F);
             if (sizeforsize > 2) {
-                // more than two bytes for encoding => not something than we can handle
+                // More than two bytes for encoding => not something that we can handle
                 return 0;
             } else if (sizeforsize == 1) {
                 size = Util.makeShort((byte) 0,buf[(short) (offset + i + 1)]);
@@ -290,7 +290,7 @@ public class UtilTLV {
                 size = Util.getShort(buf, (short) (offset + i + 1));
             }
         } else {
-            // size encode in one byte
+            // The size is encode in one byte
             size = Util.makeShort((byte) 0,buf[(short) (offset + i)]);
         }
         return size;
