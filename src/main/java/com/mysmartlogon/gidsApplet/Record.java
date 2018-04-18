@@ -58,6 +58,7 @@ public class Record {
         return this.data;
     }
 
+    // Function to clear the content of array i.e. memory cleaning by filling it with 0
     public void clearContents() {
         Util.arrayFillNonAtomic(data, (short)0, (short)data.length, (byte)0);
     }
