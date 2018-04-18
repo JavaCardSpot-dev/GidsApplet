@@ -33,31 +33,31 @@ import javacard.framework.Util;
 
 public class TransmitManager {
 
-    // a ram buffer for public key export (no need to allocate flash !)
-    // memory buffer size is determined by copyRecordsToRamBuf=min 512
+    // A ram buffer for public key export (no need to allocate flash !)
+    // Memory buffer size is determined by copyRecordsToRamBuf=min 512
     private static final short RAM_BUF_SIZE = (short) 530;
     private static final short FLASH_BUF_SIZE = (short) 1220;
     private byte[] ram_buf = null;
-    // internal variables to do chaining
+    // Internal variables to do chaining
     private short[] chaining_cache = null;
-    // store special object to returns or if null, use the ram buffer
+    // Store special object to returns or if null, use the ram buffer
     private Object[] chaining_object = null;
 
     private byte[] flash_buf = null;
     
-    // number of variables for the cache
+    // The number of variables for the cache
     private static final short CHAINING_CACHE_SIZE = (short) 6;
-    // index of the object (when sending Record[])
+    // Index of the object (when sending Record[])
     private static final short CHAINING_OBJECT_INDEX = (short) 0;
-    // current offset
+    // Current offset
     private static final short RAM_CHAINING_CACHE_OFFSET_CURRENT_POS = (short) 1;
-    // max size (if ram buffer)
+    // Max size (if ram buffer)
     private static final short RAM_CHAINING_CACHE_OFFSET_BYTES_REMAINING = (short) 2;
-    // previous APDU data to check consistancy between chain
+    // Previous APDU data to check consistancy between chain
     private static final short RAM_CHAINING_CACHE_OFFSET_CURRENT_INS = (short) 3;
     private static final short RAM_CHAINING_CACHE_OFFSET_CURRENT_P1P2 = (short) 4;
     private static final short RAM_CHAINING_CACHE_PUT_DATA_OFFSET = (short) 5;
-    // index of the object array
+    // Index of the object array
     private static final short CHAINING_OBJECT = (short) 0;
     private static final short PUT_DATA_OBJECT = (short) 1;
 
@@ -68,9 +68,9 @@ public class TransmitManager {
 
     }
 
-    // Functions to Clear RAM memory, Flash Memory during any other functions
+    // Functions to clear RAM memory, flash memory during any other functions
     
-    // Clear RAM Buffer by making it 0x00 and set cache index & parameters to 0(Zero)
+    // Clear RAM buffer by making it 0x00 and set cache index & parameters to 0(Zero)
     private void Clear(boolean buffer) {
         if (buffer) {
             Util.arrayFillNonAtomic(ram_buf, (short)0, RAM_BUF_SIZE, (byte)0x00);
@@ -83,23 +83,23 @@ public class TransmitManager {
         chaining_object[PUT_DATA_OBJECT] = null;
     }
 
-    // Return the RAM Buffer
+    // Return the RAM buffer
     public byte[] GetRamBuffer() {
         return ram_buf;
     }
     
-    // Return Flash Memory Buffer
+    // Return flash memory buffer
     public byte[] GetFlashBuffer()
     {
         return flash_buf;
     }
 
-    // Clears the RAM Buffer by calling Clear() with true flag
+    // Clear the RAM buffer by calling Clear() with true flag
     public void ClearRamBuffer() {
         Clear(true);
     }
     
-    // Clear Flash Memory if not already NUll and delete the object if it supported, otherwise fill it with 0x00.
+    // Clear flash memory if not already NUll and delete the object if it is supported, otherwise fill it with 0x00.
     public void ClearFlashBuffer() {
         if (flash_buf != null)
         {
@@ -129,7 +129,7 @@ public class TransmitManager {
         return ((byte)(buf[0] & (byte)0x10) == (byte)0x10);
     }
 
-    // This function reads the APDU command and chaining check and initialization 
+    // This function reads the APDU command, chaining check and initialization 
     // RAM_CHAINING_CACHE_OFFSET_CURRENT_INS
     public void processChainInitialization(APDU apdu) {
         byte buffer[] = apdu.getBuffer();
@@ -172,10 +172,10 @@ public class TransmitManager {
 
         // If the card expects a GET RESPONSE, no other operation should be requested.
         if(chaining_cache[RAM_CHAINING_CACHE_OFFSET_BYTES_REMAINING] > 0 && ins != GidsApplet.INS_GET_RESPONSE) {
-            // clear the buffer to avoid memory exploitation
+            // Clear the buffer to avoid memory exploitation
             Clear(true);
         }
-        // if instruction is not INS_PUT_DATA then clear cache.
+        // If instruction is not INS_PUT_DATA, then clear cache.
         if (ins != GidsApplet.INS_PUT_DATA) {
             clearCachedRecord();
         }
@@ -198,7 +198,7 @@ public class TransmitManager {
     
     // Be careful while writing to FLASH, as it is permanent
     public short doChainingOrExtAPDUFlash(APDU apdu) throws ISOException {
-        // allocate flash buffer only when needed - it can remain for the rest of the card life
+        // Allocate flash buffer only when needed - it can remain for the rest of the card life
         if (flash_buf == null)
         {
             try {
@@ -266,11 +266,11 @@ public class TransmitManager {
         while (records[index] != null) {
             byte[] data = records[index].GetData();
             short dataToCopy = (short)(data.length - pos);
-            // compute the length of data to copy 
+            // Compute the length of data to copy 
             if ((short)(dataToCopy + dataCopied) > 512) {
                 dataToCopy = (short) (512 - dataCopied);
             }
-            // Copy data to RAM Buffer
+            // Copy data to RAM buffer
             Util.arrayCopyNonAtomic(data, pos, ram_buf, dataCopied, dataToCopy);
             if ((short) (dataCopied + dataToCopy) == le) {
                 chaining_cache[CHAINING_OBJECT_INDEX] = (short) (index + (short) 1);
@@ -283,11 +283,11 @@ public class TransmitManager {
             pos = 0;
             dataCopied += dataToCopy;
             if (dataCopied >= 512) {
-                // no need to copy more data.
+                // No need to copy more data.
                 return dataCopied;
             }
         }
-        // if we are here, we have less than 512 bytes of data
+        // If we are here, we have less than 512 bytes of data
         return dataCopied;
     }
 
@@ -310,7 +310,7 @@ public class TransmitManager {
         le = apdu.setOutgoing();
         // le has not been set
         if(le == 0) {
-            // we get here when called from the Shared VMWare reader
+            // We get here when called from the Shared VMWare reader
             byte ins = apdu.getBuffer()[ISO7816.OFFSET_INS];
             if ( ins != GidsApplet.INS_GENERATE_ASYMMETRIC_KEYPAIR) {
                 le = 256;
@@ -332,11 +332,11 @@ public class TransmitManager {
             pos = 0;
         }
 
-        // We have 256 Bytes send-capacity per APDU.
+        // We have 256 bytes send-capacity per APDU.
         short sendLen = remaininglen > le ? le : remaininglen;
         apdu.setOutgoingLength(sendLen);
         apdu.sendBytesLong(data, pos, sendLen);
-        // the position when using Record[] is maintened by copyRecordsToRamBuf
+        // the position when using Record[] is maintained by copyRecordsToRamBuf
         if (chaining_object[CHAINING_OBJECT] == null || !(chaining_object[CHAINING_OBJECT] instanceof Record[])) {
             chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS]+= sendLen;
         }
@@ -349,36 +349,36 @@ public class TransmitManager {
             short nextRespLen = remaininglen > 256 ? 256 : remaininglen;
             ISOException.throwIt( (short)(ISO7816.SW_BYTES_REMAINING_00 | nextRespLen) );
         } else {
-            // Clear RAM Buffer and set cache index & parameters to 0(Zero)
+            // Clear RAM buffer and set cache index & parameters to 0(Zero)
             Clear(true);
             return;
         }
     }
 
     public void sendRecord(APDU apdu, Record data) {
-        // First Clear RAM Buffer and set cache index & parameters to 0(Zero)
+        // First clear RAM buffer and set cache index & parameters to 0(Zero)
         Clear(true);
         chaining_object[CHAINING_OBJECT] = data;
         sendData(apdu);
     }
 
     public void sendRecords(APDU apdu, Record[] data) {
-        // First Clear RAM Buffer and set cache index & parameters to 0(Zero)
+        // First clear RAM buffer and set cache index & parameters to 0(Zero)
         Clear(true);
         chaining_object[CHAINING_OBJECT] = data;
         sendData(apdu);
     }
 
-    // To send the data from RAM Buffer with given offset and length
+    // To send the data from RAM buffer with given offset and length
     public void sendDataFromRamBuffer(APDU apdu, short offset, short length) {
-        // Do not clear the RAM Buffer, only set cache index & parameters to 0(Zero)
+        // Do not clear the RAM buffer, only set cache index & parameters to 0(Zero)
         Clear(false);   
         chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS] = offset;
         chaining_cache[RAM_CHAINING_CACHE_OFFSET_BYTES_REMAINING] = length;
         sendData(apdu);
     }
 
-    /* functions used to cache a Record object for chained PUT DATA.
+    /* Functions used to cache a Record object for chained PUT DATA.
      * We cannot use the ram buffer because it is too small. */
     public Record returnCachedRecord() {
         Object object = chaining_object[PUT_DATA_OBJECT];
@@ -400,7 +400,7 @@ public class TransmitManager {
         chaining_cache[RAM_CHAINING_CACHE_PUT_DATA_OFFSET] = offset;
     }
 
-    // Function to clear Cache Record by setting Chaining Object and Cache to null and 0(Zero)
+    // Function to clear cache record by setting chaining object and cache to null and 0(Zero)
     public void clearCachedRecord() {
         chaining_object[PUT_DATA_OBJECT] = null;
         chaining_cache[RAM_CHAINING_CACHE_PUT_DATA_OFFSET] = 0;
