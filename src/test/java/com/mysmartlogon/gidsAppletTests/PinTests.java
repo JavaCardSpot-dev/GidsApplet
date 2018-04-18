@@ -1,6 +1,5 @@
 /*
  * This test class consists of tests for fuzzing and general replay attacks against the PIN authentication.
- * It will be extended by PV204-Security Technologies students from Masaryk University
  */
 
 package com.mysmartlogon.gidsAppletTests;
@@ -33,23 +32,23 @@ public class PinTests extends GidsBaseTestClass {
     public void testVerifyPin() {
         // Authenticate with PIN (8 B)
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
-        // pin status
+        // PIN status
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
     }
 
     @Test
     public void testTooLongPin() {
-        // Authenticate with Long PIN (32 B)
+        // Authenticate with long PIN (32 B)
         execute("00 20 00 80 20 30 31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 37 38 39 30 31", 0x63C3);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
-        //execute("00 20 00 80 20 30 31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 37 38 39 30 31", 0x63C3);
-        //execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
+        // execute("00 20 00 80 20 30 31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 37 38 39 30 31 32 33 34 35 36 37 38 39 30 31", 0x63C3);
+        // execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
     }
 
     @Test
     public void testTooShortPin() {
-        // Authenticate with Short PIN (1 B)
+        // Authenticate with short PIN (1 B)
         execute("00 20 00 80 01 30", 0x63C3);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
         execute("00 20 00 80 01 30", 0x63C3);
@@ -60,13 +59,13 @@ public class PinTests extends GidsBaseTestClass {
     @Test
     public void testNonExistingPin() {
         execute("00 20 00 79 08 31 32 33 34 35 36 37 38", 0x6a88);
-        // pin status using 00 CB 3F FF
+        // PIN status using 00 CB 3F FF
         execute("00 CB 3F FF 04 5C 02 7F 69 00", 0x6984);
     }
 
     @Test
     public void testVerifyPuk() {
-        // puk is disabled
+        // PUK is disabled
         execute("00200081083132333435363738", 0x6a88);
         execute("00 CB 3F FF 04 5C 02 7F 73 00", 0x6a88);
     }
@@ -99,19 +98,19 @@ public class PinTests extends GidsBaseTestClass {
 
     @Test
     public void testPinFailure() {
-        // good PIN
+        // Good PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
-        // bad PIN
+        // Bad PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C2);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701029301039000");
-        // bad PIN with same prefix short length
+        // Bad PIN with same prefix short length
         execute("00 20 00 80 07 31 32 33 34 35 36 37", 0x63C1);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701019301039000");
-        // bad PIN
-        //execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C1);
-        //execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701019301039000");
-        // good PIN
+        // Bad PIN
+        // execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C1);
+        // execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701019301039000");
+        // Good PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
     }
@@ -121,37 +120,37 @@ public class PinTests extends GidsBaseTestClass {
         // The number of trials is 3
         // Authentication should not fail after two bad PIN followed by a good PIN
         
-        // bad PIN
+        // Bad PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C2);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701029301039000");
-        // bad PIN
+        // Bad PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C1);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701019301039000");
-        // good PIN
+        // Good PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
     }
     
-    // Test Number of Trials Update after GOOD PIN 
+    // Test the number of trials update after good PIN 
     @Test
     public void testPinTrialUpdate() {
         // The number of trials is 3
         // The number of trials must be updated to initial value = 3 
         // after wrong PIN trials less than three times followed by a good PIN
         
-        // bad PIN
+        // Bad PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C2);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701029301039000");
-        // good PIN
+        // Good PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
-        // bad PIN
+        // Bad PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C2);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701029301039000");
-        // bad PIN
+        // Bad PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C1);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701019301039000");
-        // good PIN
+        // Good PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");      
     }
@@ -159,29 +158,29 @@ public class PinTests extends GidsBaseTestClass {
 
     @Test
     public void testChangePIN() {
-        // good pin
+        // Good PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
-        // change pin   00 24 00 80 len old_pin new_pin
+        // Change PIN  00 24 00 80 len old_pin new_pin
         execute("00 24 00 80 10 31 32 33 34 35 36 37 38 31 32 33 34 35 36 37 37");
-        // try old one
+        // Try old one
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38", 0x63C2);
-        // try new one
+        // Try new one
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37");
-        // change pin again
+        // Change PIN again
         execute("00 24 00 80 10 31 32 33 34 35 36 37 37 31 32 33 34 35 36 37 38");
     }
 
     @Test
     public void testBlockPin() {
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
-        // bad PIN          Response Error:  0x63 Cx (Comparison failed and x=3,2,1 tries remain)
+        // Bad PIN          Response Error:  0x63 Cx (Comparison failed and x=3,2,1 tries remain)
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C2);
-        // bad PIN
+        // Bad PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C1);
-        // bad PIN
+        // Bad PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C0);
-        // blocked After three BAD PIN  
-        // bad PIN          Response Error:  0x6983: Authentication method blocked
+        // Blocked after three bad PIN  
+        // Bad PIN          Response Error:  0x6983: Authentication method blocked
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x6983);
         // bad PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x6983);
@@ -189,11 +188,11 @@ public class PinTests extends GidsBaseTestClass {
         byte[] key = DatatypeConverter.parseHexBinary("010203040506070801020304050607080102030405060708");
         authenticateGeneral(key, true);
 
-        // unblock PIN 
+        // Unblock PIN 
         // 00 2C 02 80 (RESET RETRY COUNTER APDU FOR EXTERNAL OR MUTUAL AUTHENTICATION WITH AN ADMINISTRATIVE KEY)
-        // Unblock and set the PIN(unavailable ininitialization mode)
+        // Unblock and set the PIN(unavailable initialization mode)
         execute("00 2C 02 80 08 31 32 33 34 35 36 37 38");
-        // test PIN
+        // Test PIN
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
     }
 
@@ -207,25 +206,25 @@ public class PinTests extends GidsBaseTestClass {
         deskey.setKey(key, (short) 0);
         RandomData randomData = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
         randomData.generateData(myChallenge, (short) 0, (short) myChallenge.length);
-        // select admin key 00 22 81
+        // Select admin key 00 22 81
         execute("00 22 81 A4 03 83 01 80");
-        // get a challenge  00 87 00 00 04 7C 02 81 00 00
+        // Get a challenge  00 87 00 00 04 7C 02 81 00 00
         ResponseAPDU response = execute("00 87 00 00 14 7C 12 81 10" + DatatypeConverter.printHexBinary(myChallenge) + "00");
         if (!Arrays.equals(Arrays.copyOfRange(response.getBytes(), 0, 4), new byte[] {0x7C,0x12,(byte) 0x81,0x10})) {
             fail("not a challenge:" + DatatypeConverter.printHexBinary(response.getBytes()));
         }
-        // compute the response
+        // Compute the response
         challenge = Arrays.copyOfRange(response.getBytes(), 4, 20);
-        //solve challenge
-        //R2
+        // Solve challenge
+        // R2
         System.arraycopy(challenge, 0, globalchallenge, 0, 16);
-        //R1
+        // R1
         System.arraycopy(myChallenge, 0, globalchallenge, 16, 16);
-        // keep Z1 random
+        // Keep Z1 random
         globalchallenge[(short)39] = (byte) 0x80;
         cipherDES.init(deskey, Cipher.MODE_ENCRYPT);
         cipherDES.doFinal(globalchallenge, (short) 0, (short)40, challengeresponse, (short) 0);
-        // send the response
+        // Send the response
         execute("00 87 00 00 2C 7C 2A 82 28" + DatatypeConverter.printHexBinary(challengeresponse), 0x9000);
         execute("00 87 00 00 2C 7C 2A 82 28" + DatatypeConverter.printHexBinary(challengeresponse), 0x6985);
     }
@@ -238,19 +237,19 @@ public class PinTests extends GidsBaseTestClass {
         DESKey deskey = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
         deskey.setKey(key, (short) 0);
 
-        // select admin key
+        // Select admin key
         execute("00 22 81 A4 03 83 01 80");
-        // get a challenge
+        // Get a challenge
         ResponseAPDU response = execute("00 87 00 00 04 7C 02 81 00 00");
         if (!Arrays.equals(Arrays.copyOfRange(response.getBytes(), 0, 4), new byte[] {0x7C,0x0A,(byte) 0x81,0x08})) {
             fail("not a challenge:" + DatatypeConverter.printHexBinary(response.getBytes()));
         }
-        // compute the response
+        // Compute the response
         challenge = Arrays.copyOfRange(response.getBytes(), 4, 12);
-        //solve challenge
+        // Solve challenge
         cipherDES.init(deskey, Cipher.MODE_ENCRYPT);
         cipherDES.doFinal(challenge, (short) 0, (short)8, challengeresponse, (short) 0);
-        // send the response
+        // Send the response
         execute("00 87 00 00 0C 7C 0A 82 08" + DatatypeConverter.printHexBinary(challengeresponse), 0x9000);
         execute("00 87 00 00 0C 7C 0A 82 08" + DatatypeConverter.printHexBinary(challengeresponse), 0x6985);
     }
