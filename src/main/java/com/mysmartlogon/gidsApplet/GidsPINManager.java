@@ -64,7 +64,7 @@ public class GidsPINManager {
     private static final byte EXTERNAL_AUTHENTICATED = (byte)0x44;
     private static final byte MUTUAL_AUTHENTICATED = (byte)0x88;
 
-    // An insance of GidsPIN Class
+    // An instance of GidsPIN Class
     private GidsPIN pin_pin = null;
     private GidsPIN puk_puk = null;
     private byte applicationState = CREATION_STATE;
@@ -289,7 +289,7 @@ public class GidsPINManager {
         KeyReference[0] = null;
     }
 
-    //This function check the User Authentication by first checking the Initialization Mode followed by the PIN/PUK validation
+    //This function check the user authentication by first checking the initialization mode followed by the PIN/PUK validation
     private boolean CheckUserAuthentication() {
         // No user authentication required during initialization mode
         if (CheckApplicationState(INITIALIZATION_STATE))
@@ -300,7 +300,7 @@ public class GidsPINManager {
     }
 
    // This function checks the type of authentication is either of CheckExternal Or MutualAuthentication using 
-   // state of admin authentication if it is already in initialization mode, if yes retun TRUE else false
+   // state of admin authentication if it is already in initialization mode, if yes return TRUE else false
     private boolean CheckExternalOrMutualAuthentication() {
         // No external/mutual authentication required during initialization mode
         if (CheckApplicationState(INITIALIZATION_STATE))
@@ -308,16 +308,16 @@ public class GidsPINManager {
         return CheckAdminAuthenticationState((byte) (EXTERNAL_AUTHENTICATED | MUTUAL_AUTHENTICATED));
     }
 
-    // Sets the CRT in the Key Reference from the Control Reference Template 
+    // Sets the CRT in the key reference from the Control Reference Template 
     public void SetKeyReference(CRTKeyFile crt) {
         KeyReference[0] = crt;
     }
 
     /**
      * \
-     // This function CheckACL checks the value of acl, and accordingly put restriction or no restriction.
+     // This function checks the value of ACL, and accordingly put restriction or no restriction.
      // If neither of above case, it will check for the value of acl for type of operation i.e. contact or contactless
-     // After checking the type of operation the type of Authentication required: may be PIN/PUK or external (Mutual Authentication)
+     // After checking the type of operation the type of authentication required: may be PIN/PUK or external/mutual authentication)
      // Which is mandatory or not. In all these cases throws an SW_SECURITY_STATUS_NOT_SATISFIED exception if not allowed.
      */
     public void CheckACL(byte acl) {
@@ -358,7 +358,7 @@ public class GidsPINManager {
             // Else continue
         }
         if(authentication  == (byte) 0xA0) {
-            // External / mutual authentication mandatory
+            // External or mutual authentication mandatory
             if (CheckExternalOrMutualAuthentication()) {
                 return;
             }
@@ -375,12 +375,12 @@ public class GidsPINManager {
     }
 
     /**
-     * \brief Process the VERIFY apdu (INS = 20).
+     * \brief Process the VERIFY APDU (INS = 20).
      *
-     * This apdu is used to verify a PIN and authenticate the user. A counter is used
+     * This APDU is used to verify a PIN and authenticate the user. A counter is used
      * to limit unsuccessful tries (i.e. brute force attacks).
      *
-     * \param apdu The apdu.
+     * \param apdu The APDU.
      *
      * \throw ISOException SW_INCORRECT_P1P2, ISO7816.SW_WRONG_LENGTH, SW_PIN_TRIES_REMAINING.
      */
@@ -445,7 +445,7 @@ public class GidsPINManager {
      * The state will advance to STATE_INITIALISATION (i.e. the PUK must be set before the PIN).
      * In a "later" state the user must authenticate himself to be able to change the PIN.
      *
-     * \param apdu The apdu.
+     * \param apdu The APDU.
      *
      * \throws ISOException SW_INCORRECT_P1P2, ISO7816.SW_WRONG_LENGTH, SW_PIN_TRIES_REMAINING.
      */
@@ -470,7 +470,7 @@ public class GidsPINManager {
             // Check length.
             pin.CheckLength((byte) lc);
 
-            // Authentication not needed for the first pin set
+            // Authentication not needed for the first PIN set
             if (!CheckApplicationState(INITIALIZATION_STATE)) {
                 if (!pin.isValidated() && !puk.isValidated()) {
                     ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
@@ -498,7 +498,7 @@ public class GidsPINManager {
 
             byte currentPinLength = pin.GetCurrentPINLen();
             byte currentPukLength = puk.GetCurrentPINLen();
-            // If the current pin is very long and the tested pin is very short, force the verification to decreate the remaining try count
+            // If the current PIN is very long and the tested PIN is very short, force the verification to decreate the remaining try count
             // do not allow the revelation of currentPinLength until pin.check is done
             if (lc < currentPinLength) {
                 currentPinLength = (byte) lc;
@@ -548,7 +548,7 @@ public class GidsPINManager {
 
         if(p1 == (byte) 0x02) {
             // This supposes a previous authentication of the admin via
-            // external or mutual authenticate
+            // external or mutual authentication
             lc = apdu.setIncomingAndReceive();
             // Only P2 = 80 is specified
             if (p2 != (byte) 0x80) {
@@ -596,7 +596,7 @@ public class GidsPINManager {
         // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
 
-        // Check DATA is valid or not 
+        // Check data is valid or not 
         short innerPos = 0, innerLen = 0;
         if (buf[ISO7816.OFFSET_CDATA] != (byte) 0x7C) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
@@ -639,7 +639,7 @@ public class GidsPINManager {
         try {
             pos = UtilTLV.findTag(buf, innerPos, innerLen, (byte) 0x81);
             if (buf[(short) (pos+1)] == 0) {
-                // Zero len TLV allowed
+                // Zero length TLV allowed
                 len = 0;
             } else {
                 len = UtilTLV.decodeLengthField(buf, (short)(pos+1));
