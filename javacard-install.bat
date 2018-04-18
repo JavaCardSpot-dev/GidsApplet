@@ -14,5 +14,4 @@ java -jar %JCBUILD_EXPORTER% -uninstall %JCBUILD_TARGET% >> %JCBUILD_LOG%
 rem install new version and log all information
 java -jar %JCBUILD_EXPORTER% -install %JCBUILD_TARGET% -default -d -v -i >> %JCBUILD_LOG%
 rem check installation
-java -jar %JCBUILD_EXPORTER% -list
-pause
+java -jar %JCBUILD_EXPORTER% -list >> %JCBUILD_LOG%

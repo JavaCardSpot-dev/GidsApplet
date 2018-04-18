@@ -6,12 +6,12 @@ package com.mysmartlogon.gidsAppletTests;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-//import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
-import javax.smartcardio.CommandAPDU;
-import javax.smartcardio.ResponseAPDU;
+import javax.smartcardio.*;
 import javax.xml.bind.DatatypeConverter;
 
 import org.junit.Before;
@@ -23,32 +23,92 @@ import javacard.framework.AID;
 import javacard.framework.Util;
 import javacard.security.DESKey;
 import javacard.security.KeyBuilder;
-//import javacard.security.RandomData;
 import javacardx.crypto.Cipher;
 
 public abstract class GidsBaseTestClass {
+    final boolean USE_SIMULATOR = false;
+    private final int TARGET_READER_INDEX = 0;
 
-
-    protected JavaxSmartCardInterface  simulator;
+    static Card physicalCard = null;
+    JavaxSmartCardInterface simulator = null;
     private boolean display = true;
 
     @Before
     public void setUp() throws Exception {
-        // 1. Create simulator
-        byte[] TEST_APPLET_AID_BYTES = new byte[] {(byte) 0xA0,0x00,0x00,0x03,(byte) 0x97,0x42,0x54,0x46,0x59};
-        AID TEST_APPLET_AID = new AID(TEST_APPLET_AID_BYTES, (short)0, (byte) TEST_APPLET_AID_BYTES.length);
+        //if (physicalCard != null) return;
 
+        // Using simulator
+        if (USE_SIMULATOR) {
 
+            // 1. Create simulator
+            byte[] TEST_APPLET_AID_BYTES = new byte[]{(byte) 0xA0, 0x00, 0x00, 0x03, (byte) 0x97, 0x42, 0x54, 0x46, 0x59};
+            AID TEST_APPLET_AID = new AID(TEST_APPLET_AID_BYTES, (short) 0, (byte) TEST_APPLET_AID_BYTES.length);
+            simulator = new JavaxSmartCardInterface();
 
-        simulator = new JavaxSmartCardInterface ();
+            // 2. Install applet
+            simulator.installApplet(TEST_APPLET_AID, GidsApplet.class);
 
-        // 2. Install applet
-        simulator.installApplet(TEST_APPLET_AID, GidsApplet.class);
-        simulator.selectApplet(TEST_APPLET_AID);
-        // 3. Select applet
+            // 3. Select applet
+            simulator.selectApplet(TEST_APPLET_AID);
+
+        // Using real card
+        } else {
+            TerminalFactory factory = TerminalFactory.getDefault();
+            List<CardTerminal> terminals = new ArrayList<>();
+
+            System.out.print("Installing applet...");
+            try {
+                Process p1 = Runtime.getRuntime().exec("java -jar ext/gp.jar -uninstall build/javacard/GidsApplet.cap");
+                p1.waitFor();
+                Process p2 = Runtime.getRuntime().exec("java -jar ext/gp.jar -install build/javacard/GidsApplet.cap -default");
+                p2.waitFor();
+                System.out.println(" Done.");
+            } catch (Exception e) {
+                e.printStackTrace();
+                fail("Failed to install applet.");
+            }
+
+            boolean card_found = false;
+            CardTerminal terminal = null;
+
+            System.out.print("Looking for card terminals...");
+            try {
+                for (CardTerminal t : factory.terminals().list()) {
+                    terminals.add(t);
+                    if (t.isCardPresent()) {
+                        card_found = true;
+                    }
+                }
+                System.out.println(" Done.");
+            } catch (Exception e) {
+                fail("Failed to access card terminals.");
+            }
+
+            if (card_found) {
+                System.out.println("Cards found: " + terminals);
+
+                terminal = terminals.get(TARGET_READER_INDEX); // Prioritize physical card over simulations
+
+                System.out.print("Connecting to card...");
+                physicalCard = terminal.connect("*"); // Connect with the card
+                if (physicalCard == null) fail("Failed to connect to card.");
+                System.out.println(" Done.");
+
+                // Select applet
+                // Applet ID = A0 00 00 03 97 42 54 46 59
+                System.out.print("Selecting applet...");
+                execute("00 A4 04 00 09 A0 00 00 03 97 42 54 46 59 00");
+                System.out.println(" Done.");
+
+            } else {
+                fail("Failed to find physical card.");
+            }
+
+        }
     }
 
     protected void createcard() {
+
         //display = false;
         execute("00A4040409A0000003974254465900");
 
@@ -80,8 +140,8 @@ public abstract class GidsBaseTestClass {
         execute("00 DB A0 10 13 DF 20 10 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f");
 
         // activate
-        execute("00 A4 00 0C 02 3F FF", false);
-        execute("00 44 00 00 00", false);
+        execute("00 A4 00 0C 02 3F FF");
+        execute("00 44 00 00 00");
         display = true;
     }
 
@@ -208,13 +268,24 @@ public abstract class GidsBaseTestClass {
         return response;
     }
 
-
-
     private ResponseAPDU execute(String Command, boolean display) {
-
+        ResponseAPDU response = null;
         Command = Command.replaceAll("\\s","");
         if (display) System.out.println(Command);
-        ResponseAPDU response = simulator.transmitCommand(new CommandAPDU(DatatypeConverter.parseHexBinary(Command)));
+
+        // Using simulator
+        if (USE_SIMULATOR) {
+            response = simulator.transmitCommand(new CommandAPDU(DatatypeConverter.parseHexBinary(Command)));
+
+        // Using real card
+        } else {
+            try {
+                response = physicalCard.getBasicChannel().transmit(new CommandAPDU(DatatypeConverter.parseHexBinary(Command)));
+            } catch (CardException exception) {
+                fail("Couldn't transmit APDU command to physical card.");
+            }
+        }
+
         if (display) System.out.println(DatatypeConverter.printHexBinary(response.getBytes()));
         return response;
     }

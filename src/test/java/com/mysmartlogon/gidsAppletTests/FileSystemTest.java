@@ -148,35 +148,37 @@ public class FileSystemTest extends GidsBaseTestClass {
         testPutKey(0x89, 0x9000);
         deauthenticate();
 
-        // media: contactonly operation
-        authenticatePin();
-        createKeyFile(0xB090, "87 00 91 FF");
-        deauthenticate();
-        testPutKey(0x90, 0x6982);
-        simulator.changeProtocol("T=CL");
-        testPutKey(0x90, 0x6982);
-        authenticatePin();
-        testPutKey(0x90, 0x6982);
-        deauthenticate();
-        simulator.changeProtocol("T=0");
-        authenticatePin();
-        testPutKey(0x90, 0x9000);
-        deauthenticate();
+        if (USE_SIMULATOR) {
+            // media: contactonly operation
+            authenticatePin();
+            createKeyFile(0xB090, "87 00 91 FF");
+            deauthenticate();
+            testPutKey(0x90, 0x6982);
+            simulator.changeProtocol("T=CL");
+            testPutKey(0x90, 0x6982);
+            authenticatePin();
+            testPutKey(0x90, 0x6982);
+            deauthenticate();
+            simulator.changeProtocol("T=0");
+            authenticatePin();
+            testPutKey(0x90, 0x9000);
+            deauthenticate();
 
-        // media: contactless only operation
-        authenticatePin();
-        createKeyFile(0xB091, "87 00 92 FF");
-        deauthenticate();
-        testPutKey(0x91, 0x6982);
-        authenticatePin();
-        testPutKey(0x91, 0x6982);
-        deauthenticate();
-        simulator.changeProtocol("T=CL");
-        testPutKey(0x91, 0x6982);
-        authenticatePin();
-        testPutKey(0x91, 0x9000);
-        deauthenticate();
-        simulator.changeProtocol("T=0");
+            // media: contactless only operation
+            authenticatePin();
+            createKeyFile(0xB091, "87 00 92 FF");
+            deauthenticate();
+            testPutKey(0x91, 0x6982);
+            authenticatePin();
+            testPutKey(0x91, 0x6982);
+            deauthenticate();
+            simulator.changeProtocol("T=CL");
+            testPutKey(0x91, 0x6982);
+            authenticatePin();
+            testPutKey(0x91, 0x9000);
+            deauthenticate();
+            simulator.changeProtocol("T=0");
+        }
     }
 
     @Test
