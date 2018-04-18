@@ -60,10 +60,13 @@ public class BerTlvFile extends ElementaryFile {
         this.currentNumChildren = 0;
     }
 
+    // Function to Clear Contents for all the childrens and set them null
+    // It extend/use the function defined in Class Record
     void clearContents() {
         short i;
 
         for(i = 0; i < currentNumChildren; i++) {
+            //Function to clear the content of array i.e. memory cleaning by filling it with 0 (Zero)
             children[i].clearContents();
             children[i] = null;
         }
