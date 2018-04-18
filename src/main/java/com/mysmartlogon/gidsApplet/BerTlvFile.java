@@ -33,7 +33,7 @@ import javacard.framework.Util;
 public class BerTlvFile extends ElementaryFile {
 
     private static final short ELEMENT_COUNT_START = 10;
-    private static final short ELEMENT_COUNT_MAX = 30; // set to max. 16383
+    private static final short ELEMENT_COUNT_MAX = 30; // Set to max. 16383
 
     private Record[] children;
     private byte currentNumChildren;
@@ -60,13 +60,13 @@ public class BerTlvFile extends ElementaryFile {
         this.currentNumChildren = 0;
     }
 
-    // Function to Clear Contents for all the childrens and set them null
-    // It extend/use the function defined in Class Record
+    // Function to clear contents for all the children and set them null
+    // It extends/uses the function defined in Class Record
     void clearContents() {
         short i;
 
         for(i = 0; i < currentNumChildren; i++) {
-            //Function to clear the content of array i.e. memory cleaning by filling it with 0 (Zero)
+            //Function to clear the content of array i.e. memory cleaning by filling it with 0s (all zeros)
             children[i].clearContents();
             children[i] = null;
         }
@@ -82,16 +82,16 @@ public class BerTlvFile extends ElementaryFile {
      */
     protected void deleteChildren(short childNum) {
 
-        // Fill up empty field in children array.
+        // Fill up empty field in child array.
         if(!JCSystem.isObjectDeletionSupported()) {
             children[childNum].clearContents();
         }
 
         children[childNum] = null;
-        currentNumChildren--; // We have one less children now.
+        currentNumChildren--; // We have one less child now.
 
 
-        // The last children is one ahead, so it is at currentNumChildren.
+        // The last child is one ahead, so it is at currentNumChildren.
         if(childNum < currentNumChildren) {
             children[childNum] = children[currentNumChildren];
         }
@@ -119,9 +119,9 @@ public class BerTlvFile extends ElementaryFile {
             byte[] value = children[i].GetData();
 
             if (UtilTLV.IsBERTLVTagEqual(buffer, offset, (short) (offset + lengthavailable), value)) {
-                // found => replace or erase ?
+                // Found => replace or erase ?
 
-                // erase if empty DO pushed and already empty DO stored
+                // Erase if empty DO pushed and already empty DO stored
                 short oldlen = UtilTLV.GetBERTLVDataLen(value, (short) 0, (short) value.length);
                 short newlen = UtilTLV.GetBERTLVDataLen(buffer, offset, (short) (offset + lengthavailable));
                 if (oldlen == 0) {
@@ -130,12 +130,12 @@ public class BerTlvFile extends ElementaryFile {
                         return null;
                     }
                 }
-                // replace
+                // Replace
                 if (oldlen == newlen) {
-                    // no need to add / remove data, just replace the buffer
+                    // No need to add / remove data, just replace the buffer
                     Util.arrayCopyNonAtomic(buffer, offset, value, (short) 0, lengthToCopy);
                 } else {
-                    // remove previous data, add new
+                    // Remove previous data, add new
                     byte[] data = new byte[wholelength];
                     Record record = new Record(data);
                     Util.arrayCopyNonAtomic(buffer, offset, data, (short) 0, lengthToCopy);
@@ -181,11 +181,11 @@ public class BerTlvFile extends ElementaryFile {
      * \brief Copies the references from one File array to the other.
      *
      * \attention Although only references are copied, this is probably still quite expensive because
-     * writing to the EEPROM is. Only use this for operations that are not called often (Creating and deleting files etc.).
+     * writing to the EEPROM is. Only use this for operations that are not called often (Creating and deleting files, etc.).
      *
-     * \param src The source File array to copy from.
+     * \param src The source file array to copy from.
      *
-     * \param dest The destination File array to copy to. It MUST be at least of size of the src array.
+     * \param dest The destination file array to copy to. It MUST be at least of size of the source array.
      */
     private static void copyFileArrayRefs(Record[] src, Record[] dest) {
         short i = 0;
