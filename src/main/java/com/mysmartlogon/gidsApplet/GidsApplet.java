@@ -151,7 +151,7 @@ public class GidsApplet extends Applet {
                                 // FMD
                                 new byte[]	{
                                     (byte)0x64, (byte)0x09,
-                                    (byte)0x5F, (byte)0x2F, (byte) 0x01, (byte) 0x60, // Pin usage policy
+                                    (byte)0x5F, (byte)0x2F, (byte) 0x01, (byte) 0x60, // PIN usage policy
                                     (byte)0x7F, (byte)0x65, 0x02, (byte) 0x80, 0x00
                                 }
                                );
@@ -248,7 +248,7 @@ public class GidsApplet extends Applet {
                 processPutData(apdu);
                 break;
                     
-            // Reset the reference data entry counter to its iniitial value      
+            // Reset the reference data entry counter to its initial value      
             case INS_RESET_RETRY_COUNTER: 
                 pinManager.processResetRetryCounter(apdu);
                 break;
@@ -295,7 +295,7 @@ public class GidsApplet extends Applet {
         // Check the ACL permissions
         fs.CheckPermission(pinManager, File.ACL_OP_DF_TERMINATE);
         pinManager.SetApplicationState(GidsPINManager.TERMINATION_STATE);
-        // kill me
+        // Kill me
         fs.setState(File.STATE_TERMINATED);
     }
 
@@ -314,7 +314,7 @@ public class GidsApplet extends Applet {
         short lc;
 
         if (p1 == 0x3F && p2 == (byte) 0xFF) {
-            // Get Applet information
+            // Get applet information
             // Bytes received must be Lc.
             lc = apdu.setIncomingAndReceive();
             // Check for public key request
@@ -327,7 +327,7 @@ public class GidsApplet extends Applet {
                 } catch (NotFoundException e) {
                     ISOException.throwIt(ISO7816.SW_DATA_INVALID);
                 }
-                // Check permission for ACL Get Public Key
+                // Check permission to get ACL public key
                 file.CheckPermission(pinManager, File.ACL_OP_KEY_GETPUBLICKEY);
                 // Initialize public key 
                 PublicKey pk = file.GetKey().getPublic();
@@ -464,9 +464,9 @@ public class GidsApplet extends Applet {
         } catch (NotFoundException e) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
-        // Check permission for ACL asymetric key generation
+        // Check permission for ACL asymmetric key generation
         file.CheckPermission(pinManager, File.ACL_OP_KEY_GENERATE_ASYMETRIC);
-        // Try to generate RSA keyPair of size 1024/2048 
+        // Try to generate RSA key pair of size 1024/2048 
         try {
             switch(algID) {
             case (byte)0x06:
@@ -502,7 +502,7 @@ public class GidsApplet extends Applet {
         }
         file.SaveKey(kp);
 
-        // Return pubkey. See ISO7816-8 table 3.
+        // Return public key. See ISO7816-8 table 3.
         try {
             sendPublicKey(apdu, kp.getPublic());
         } catch (InvalidArgumentsException e) {
@@ -604,7 +604,7 @@ public class GidsApplet extends Applet {
         /* Extract data: */
         switch(p1) {
         case (byte) 0x81:
-        // SET Verification, encipherment, external authentication and key agreement.
+        // SET verification, encipherment, external authentication and key agreement.
         case (byte) 0xC1:
             // Private key reference (Index in keys[]-array).
             try {
@@ -754,7 +754,7 @@ public class GidsApplet extends Applet {
             ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
         }
         // Get the key - it must be an RSA private key,
-        // checks have been done in MANAGE SECURITY ENVIRONMENT.
+        // Checks have been done in MANAGE SECURITY ENVIRONMENT.
         CRTKeyFile key = (CRTKeyFile) currentKey[0];
         PrivateKey theKey = key.GetKey().getPrivate();
 
@@ -779,14 +779,14 @@ public class GidsApplet extends Applet {
     }
 
     /**
-     * \brief Compute a digital signature of the data from the apdu
+     * \brief Compute a digital signature of the data from the APDU
      * 			using the private key referenced by	an earlier
-     *			MANAGE SECURITY ENVIRONMENT apdu.
+     *			MANAGE SECURITY ENVIRONMENT APDU.
      *
-     * \attention The apdu should contain a hash, not raw data for RSA keys.
+     * \attention The APDU should contain a hash, not raw data for RSA keys.
      * 				PKCS1 padding will be applied if neccessary.
      *
-     * \param apdu The PERFORM SECURITY OPERATION apdu with P1=9E and P2=9A.
+     * \param apdu The PERFORM SECURITY OPERATION APDU with P1=9E and P2=9A.
      *
      * \throw ISOException SW_CONDITIONS_NOT_SATISFIED, SW_WRONG_LENGTH
      * 						and SW_UNKNOWN.
@@ -901,7 +901,7 @@ public class GidsApplet extends Applet {
         {
             // Flash buffer is allocated in the next instruction
             recvLen = transmitManager.doChainingOrExtAPDUFlash(apdu);
-            // If these 2 lines are reversed, flash_buf can be null
+            // If these 2 lines are reversed, flash bufber can be null
             flash_buf = transmitManager.GetFlashBuffer();
             
             try {
@@ -945,12 +945,12 @@ public class GidsApplet extends Applet {
             } catch (InvalidArgumentsException e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-            // Clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
+            // Clear resource and avoid leaking a private key in flash (if the private key is deleted after)
             transmitManager.ClearFlashBuffer();
             
         } catch(ISOException e) {
             if (e.getReason() != ISO7816.SW_NO_ERROR) {                
-                // Clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
+                // Clear resource and avoid leaking a private key in flash (if the private key is deleted after)
                 transmitManager.ClearFlashBuffer();
             }
             throw e;
