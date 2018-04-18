@@ -108,7 +108,7 @@ public class GidsApplet extends Applet {
      */
     protected GidsApplet() {
 
-        // by default the pin manager is in "initialization mode"
+        // By default the pin manager is in "initialization mode"
         pinManager = new GidsPINManager();
     
         transmitManager = new TransmitManager();
@@ -139,19 +139,19 @@ public class GidsApplet extends Applet {
                                 new byte[]	{
                                     (byte)0x62, (byte)0x08,
                                     (byte)0x82, (byte)0x01, (byte)0x38, // File descriptor byte.
-                                    (byte)0x8C, (byte)0x03, (byte)0x03, (byte)0x30, (byte)0x30,// security attribute
+                                    (byte)0x8C, (byte)0x03, (byte)0x03, (byte)0x30, (byte)0x30,// Security attribute
                                 },
                                 // FCI
                                 new byte[]	{
                                     0x61, 0X12,
                                     0x4F, 0x0B, (byte) 0xA0, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x97, (byte) 0x42, (byte) 0x54, (byte) 0x46, (byte) 0x59, 0x02, 0x01, // AID
                                     0x73, 0x03,
-                                    0x40, 0x01, mechanisms, // cryptographic mechanism
+                                    0x40, 0x01, mechanisms, // Cryptographic mechanism
                                 },
                                 // FMD
                                 new byte[]	{
                                     (byte)0x64, (byte)0x09,
-                                    (byte)0x5F, (byte)0x2F, (byte) 0x01, (byte) 0x60, // pin usage policy
+                                    (byte)0x5F, (byte)0x2F, (byte) 0x01, (byte) 0x60, // Pin usage policy
                                     (byte)0x7F, (byte)0x65, 0x02, (byte) 0x80, 0x00
                                 }
                                );
@@ -163,7 +163,7 @@ public class GidsApplet extends Applet {
 
     /**
      * \brief This method is called whenever the applet is being deselected to
-     * \deauthenticate admin key, Clear shared key, Reset KeyReferene and
+     * \deauthenticate admin key, Clear shared key, Reset KeyReference and
      *\ reset pin parameters to PIN_MAX_TRIES, PIN_MAX_LENGTH, PIN_MIN_LENGTH
      */
     public void deselect() {
@@ -269,7 +269,7 @@ public class GidsApplet extends Applet {
                 break;
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-            } // switch
+            } // Switch
         } else {
             ISOException.throwIt(ISO7816.SW_CLA_NOT_SUPPORTED);
         }
@@ -287,7 +287,7 @@ public class GidsApplet extends Applet {
         byte p1 = buf[ISO7816.OFFSET_P1];
         byte p2 = buf[ISO7816.OFFSET_P2];
 
-        // Check the Correctness of p1-p2 of the APDU
+        // Check the correctness of p1-p2 of the APDU
         if (p1 != (byte) 0x00 || p2 != (byte) 0x00 ) {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
@@ -314,11 +314,11 @@ public class GidsApplet extends Applet {
         short lc;
 
         if (p1 == 0x3F && p2 == (byte) 0xFF) {
-            // get Applet information
+            // Get Applet information
             // Bytes received must be Lc.
             lc = apdu.setIncomingAndReceive();
-            // check for public key request
-            // typically 00 CB 3F FF 0A 70 08 84 01 **81** A5 03 7F 49 80 00 (*keyref*)
+            // Check for public key request
+            // Typically 00 CB 3F FF 0A 70 08 84 01 **81** A5 03 7F 49 80 00 (*keyref*)
             if (lc == (short) 10 && buf[5] == (byte) 0x70) {
                 CRTKeyFile file = null;
                 byte keyID = buf[9];
@@ -329,7 +329,7 @@ public class GidsApplet extends Applet {
                 }
                 // Check permission for ACL Get Public Key
                 file.CheckPermission(pinManager, File.ACL_OP_KEY_GETPUBLICKEY);
-                // initialize public key 
+                // Initialize public key 
                 PublicKey pk = file.GetKey().getPublic();
 
                 // Return pubkey. See ISO7816-8 table 3.
@@ -355,7 +355,7 @@ public class GidsApplet extends Applet {
             // EF.ATR  (Elementary File Answer To Reset)
             lc = apdu.setIncomingAndReceive();
 
-            // check for EF.ATR request
+            // Check for EF.ATR request
             // 00 CB 2F 01 02 5C 00 00
             if (lc == (short) 2 && buf[5] == (byte) 0x5C && buf[6] == (byte) 0x00) {
                 // 43 01 F4 47 03 08 01 80 46 0C 4D 79 53 6D 61 72 74 4C 6F 67 6F 6E
@@ -388,7 +388,7 @@ public class GidsApplet extends Applet {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
         } else {
-            // read BER TLV DO
+            // Read BER TLV DO
             fs.processGetData(apdu);
         }
 
@@ -420,7 +420,6 @@ public class GidsApplet extends Applet {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
 
-
         // Bytes received must be Lc.
         lc = apdu.setIncomingAndReceive();
 
@@ -429,7 +428,7 @@ public class GidsApplet extends Applet {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
 
-        // length and length-field of outer FCI tag consistency check.
+        // Length and length-field of outer FCI tag consistency check.
         try {
             innerLength = UtilTLV.decodeLengthField(buf, (short)(ISO7816.OFFSET_CDATA+1));
             if(innerLength != (short)(lc-1-UtilTLV.getLengthFieldLength(buf, (short)(ISO7816.OFFSET_CDATA+1)))) {
@@ -465,9 +464,9 @@ public class GidsApplet extends Applet {
         } catch (NotFoundException e) {
             ISOException.throwIt(ISO7816.SW_DATA_INVALID);
         }
-        // Check Permission for ACL Generate Asymetric Key
+        // Check permission for ACL asymetric key generation
         file.CheckPermission(pinManager, File.ACL_OP_KEY_GENERATE_ASYMETRIC);
-        // try to Generate RSA KeyPair of Size 1024/2048 
+        // Try to generate RSA keyPair of size 1024/2048 
         try {
             switch(algID) {
             case (byte)0x06:
@@ -482,13 +481,13 @@ public class GidsApplet extends Applet {
             }
             kp.genKeyPair();
             
-            // special Feitian workaround for A40CR and A22CR cards
+            // Special Feitian workaround for A40CR and A22CR cards
             RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
             short pLen = priKey.getP(buf, (short) 0);
             priKey.setP(buf, (short) 0, pLen);
             short qLen = priKey.getQ(buf, (short) 0);
             priKey.setQ(buf, (short) 0, qLen);
-            // end of workaround
+            // End of workaround
             
         } catch(CryptoException e) {
             if(e.getReason() == CryptoException.NO_SUCH_ALGORITHM) {
@@ -532,7 +531,7 @@ public class GidsApplet extends Applet {
      * \param apdu The apdu to answer. setOutgoing() must not be called already.
      *
      * \param key The RSAPublicKey to send.
-     * 			Can be null for the secound part if there is no support for extended apdus.
+     * 			Can be null for the second part if there is no support for extended apdus.
      */
     private void sendRSAPublicKey(APDU apdu, RSAPublicKey key) {
 
@@ -577,7 +576,7 @@ public class GidsApplet extends Applet {
      *
      * \attention Only SET is supported. RESTORE will reset the security environment.
      *				The security environment will be cleared upon deselection of the applet.
-     * 				STOREing and ERASEing of security environments is not supported.
+     * 				STOREing and ERASEing of security environments are not supported.
      *
      * \param apdu The apdu.
      *
@@ -620,7 +619,7 @@ public class GidsApplet extends Applet {
             algRef = (byte) 0x02;
             break;
         case (byte) 0x41:
-            // SET Computation, decipherment, internal authentication and key agreement.
+            // SET computation, decipherment, internal authentication and key agreement.
 
             // Algorithm reference.
             try {
@@ -649,7 +648,7 @@ public class GidsApplet extends Applet {
             break;
 
         case (byte) 0xF3:
-            // RESTORE // Set sec env constants to default values.
+            // RESTORE // Set security environment constants to default values.
             algRef = 0;
             privKeyRef = -1;
             break;
@@ -693,7 +692,7 @@ public class GidsApplet extends Applet {
      * \brief Process the PERFORM SECURITY OPERATION apdu (INS=2A).
      *
      * This operation is used for cryptographic operations
-     * (Computation of digital signatures, decrypting.).
+     * (Computation of digital signatures and decrypting.).
      *
      * \param apdu The PERFORM SECURITY OPERATION apdu.
      *
@@ -761,7 +760,7 @@ public class GidsApplet extends Applet {
 
         // Check the length of the cipher.
         // Note: The first byte of the data field is the padding indicator
-        //		 and therefor not part of the ciphertext.
+        //		 and therefore not a part of the ciphertext.
         if(lc !=  (short)(theKey.getSize() / 8)) {
             ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
         }
@@ -802,7 +801,7 @@ public class GidsApplet extends Applet {
 
         switch((byte) (currentAlgorithmRef[0] & 0xF0)) {
         case (byte) 0x10:
-            // padding made off card -> raw encryption to be performed
+            // Padding made off card -> raw encryption to be performed
             lc = transmitManager.doChainingOrExtAPDU(apdu);
 
             // RSA signature operation.
@@ -819,7 +818,7 @@ public class GidsApplet extends Applet {
             apdu.sendBytesLong(ram_buf, (short) 0, sigLen);
             break;
         case (byte) 0x50:
-            // rsa padding made by the card, only the hash is provided
+            // RSA padding is made by the card, only the hash is provided
 
             // Receive.
             // Bytes received must be Lc.
@@ -876,7 +875,7 @@ public class GidsApplet extends Applet {
     /**
      * \brief Upload and import a usable private key.
      *
-     * A preceeding MANAGE SECURITY ENVIRONMENT is necessary (like with key-generation).
+     * A preceeding MANAGE SECURITY ENVIRONMENT is necessary (similar to key-generation).
      * The format of the data (of the apdu) must be BER-TLV,
      * Tag 7F48 ("T-L pair to indicate a private key data object") for RSA or tag 0xC1
      * for EC keys, containing the point Q.
@@ -900,9 +899,9 @@ public class GidsApplet extends Applet {
         }
         try
         {
-            // flash buffer is allocated in the next instruction
+            // Flash buffer is allocated in the next instruction
             recvLen = transmitManager.doChainingOrExtAPDUFlash(apdu);
-            // if these 2 lines are reversed, flash_buf can be null
+            // If these 2 lines are reversed, flash_buf can be null
             flash_buf = transmitManager.GetFlashBuffer();
             
             try {
@@ -946,12 +945,12 @@ public class GidsApplet extends Applet {
             } catch (InvalidArgumentsException e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-            // clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
+            // Clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
             transmitManager.ClearFlashBuffer();
             
         } catch(ISOException e) {
             if (e.getReason() != ISO7816.SW_NO_ERROR) {                
-                // clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
+                // Clear ressource and avoid leaking a private key in flash (if the private key is deleted after)
                 transmitManager.ClearFlashBuffer();
             }
             throw e;
