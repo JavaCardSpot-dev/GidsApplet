@@ -40,7 +40,7 @@ import javacard.framework.*;
  */
 public class DedicatedFile extends File {
     private static final short CHILDREN_COUNT_START = 10;
-    private static final short CHILDREN_COUNT_MAX = 30; // set to max. 16383
+    private static final short CHILDREN_COUNT_MAX = 30; // Set to max. 16383
 
     public static final byte SPECIFY_EF = 0x01;
     public static final byte SPECIFY_DF = 0x02;
@@ -152,17 +152,17 @@ public class DedicatedFile extends File {
             throw NotFoundException.getInstance();
         }
 
-        // If the Object Deletion is not Supported then Clear its Contents to avoid misuse
+        // If the object deletion is not supported then clear its contents to avoid misuse
         if( ! JCSystem.isObjectDeletionSupported()) {
             // Old file will stay as garbage in the EEPROM - at least clear the contents.
             children[childNum].clearContents();
         }
 
         children[childNum] = null;
-        currentNumChildren--; // We have one less children now.
+        currentNumChildren--; // We have one less child now.
 
         // Fill up empty field in children array.
-        // The last children is one ahead, so it is at currentNumChildren.
+        // The last child is one ahead, so it is at currentNumChildren.
         if(childNum < currentNumChildren) {
             children[childNum] = children[currentNumChildren];
         }
@@ -252,7 +252,7 @@ public class DedicatedFile extends File {
                 try {
                     return ((DedicatedFile)children[i]).findDedicatedFileByNameRec(name, nameOffset, nameLength);
                 } catch(NotFoundException e) {
-                    // Ignore this exception until the last children has unsuccessfully been visited.
+                    // Ignore this exception until the last child has unsuccessfully been visited.
                 }
             }
         }
@@ -285,7 +285,7 @@ public class DedicatedFile extends File {
                 try {
                     return ((DedicatedFile)children[i]).findChildrenRec(fileID, flag);
                 } catch(NotFoundException e) {
-                    // Ignore this exception until the last children has unsuccessfully been visited.
+                    // Ignore this exception until the last child has unsuccessfully been visited.
                 }
             }
         }
