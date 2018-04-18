@@ -340,7 +340,7 @@ public class GidsApplet extends Applet {
                 } catch (NotEnoughSpaceException e) {
                     ISOException.throwIt(ISO7816.SW_FILE_FULL);
                 }
-            } else if (lc == (short) 04 && buf[5] == (byte) 0x5C && buf[6] == (byte) 0x02) {
+            } else if (lc == (short) 4 && buf[5] == (byte) 0x5C && buf[6] == (byte) 0x02) {
                 short id = Util.makeShort(buf[7], buf[8]);
                 if (id == (short) 0x7F71 || id == (short) 0x7F72 || id == (short) 0x7F73 ) {
                     pinManager.returnPINStatus(apdu, id);
