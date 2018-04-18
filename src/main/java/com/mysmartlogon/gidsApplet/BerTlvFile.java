@@ -82,7 +82,7 @@ public class BerTlvFile extends ElementaryFile {
      */
     protected void deleteChildren(short childNum) {
 
-        // Fill up empty field in child array.
+        // Fill up empty field in children array.
         if(!JCSystem.isObjectDeletionSupported()) {
             children[childNum].clearContents();
         }
