@@ -68,6 +68,8 @@ public class TransmitManager {
 
     }
 
+    // Functions to Clear RAM memory, Flash Memory during any other functions
+    
     // Clear RAM Buffer by making it 0x00 and set cache index & parameters to 0(Zero)
     private void Clear(boolean buffer) {
         if (buffer) {
@@ -170,7 +172,7 @@ public class TransmitManager {
 
         // If the card expects a GET RESPONSE, no other operation should be requested.
         if(chaining_cache[RAM_CHAINING_CACHE_OFFSET_BYTES_REMAINING] > 0 && ins != GidsApplet.INS_GET_RESPONSE) {
-            // clear the buffer
+            // clear the buffer to avoid memory exploitation
             Clear(true);
         }
         // if instruction is not INS_PUT_DATA then clear cache.
@@ -264,9 +266,11 @@ public class TransmitManager {
         while (records[index] != null) {
             byte[] data = records[index].GetData();
             short dataToCopy = (short)(data.length - pos);
+            // compute the length of data to copy 
             if ((short)(dataToCopy + dataCopied) > 512) {
                 dataToCopy = (short) (512 - dataCopied);
             }
+            // Copy data to RAM Buffer
             Util.arrayCopyNonAtomic(data, pos, ram_buf, dataCopied, dataToCopy);
             if ((short) (dataCopied + dataToCopy) == le) {
                 chaining_cache[CHAINING_OBJECT_INDEX] = (short) (index + (short) 1);
@@ -345,18 +349,21 @@ public class TransmitManager {
             short nextRespLen = remaininglen > 256 ? 256 : remaininglen;
             ISOException.throwIt( (short)(ISO7816.SW_BYTES_REMAINING_00 | nextRespLen) );
         } else {
+            // Clear RAM Buffer and set cache index & parameters to 0(Zero)
             Clear(true);
             return;
         }
     }
 
     public void sendRecord(APDU apdu, Record data) {
+        // First Clear RAM Buffer and set cache index & parameters to 0(Zero)
         Clear(true);
         chaining_object[CHAINING_OBJECT] = data;
         sendData(apdu);
     }
 
     public void sendRecords(APDU apdu, Record[] data) {
+        // First Clear RAM Buffer and set cache index & parameters to 0(Zero)
         Clear(true);
         chaining_object[CHAINING_OBJECT] = data;
         sendData(apdu);
@@ -364,7 +371,8 @@ public class TransmitManager {
 
     // To send the data from RAM Buffer with given offset and length
     public void sendDataFromRamBuffer(APDU apdu, short offset, short length) {
-        Clear(false);   // Do not clear the RAM Buffer, only set cache index & parameters to 0(Zero)
+        // Do not clear the RAM Buffer, only set cache index & parameters to 0(Zero)
+        Clear(false);   
         chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS] = offset;
         chaining_cache[RAM_CHAINING_CACHE_OFFSET_BYTES_REMAINING] = length;
         sendData(apdu);
@@ -392,6 +400,7 @@ public class TransmitManager {
         chaining_cache[RAM_CHAINING_CACHE_PUT_DATA_OFFSET] = offset;
     }
 
+    // Function to clear Cache Record by setting Chaining Object and Cache to null and 0(Zero)
     public void clearCachedRecord() {
         chaining_object[PUT_DATA_OBJECT] = null;
         chaining_cache[RAM_CHAINING_CACHE_PUT_DATA_OFFSET] = 0;
