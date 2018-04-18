@@ -574,6 +574,46 @@ public class GidsPINManager {
         }
 
     }
+ 
+ public void	processResetRetryCounterPUK(APDU apdu) throws ISOException {
+        byte[] buf = apdu.getBuffer();
+        byte p1 = buf[ISO7816.OFFSET_P1];
+        byte p2 = buf[ISO7816.OFFSET_P2];
+        short lc;
+        GidsPIN puk = null;
+
+        if(!CheckApplicationState((byte)(OPERATIONAL_STATE | TERMINATION_STATE))) {
+            ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
+        }
+
+        if(p1 == (byte) 0x02) {
+            // This supposes a previous authentication of the admin via
+            // external or mutual authentication
+            lc = apdu.setIncomingAndReceive();
+            // Only P2 = 80 is specified
+            if (p2 != (byte) 0x80) {
+                ISOException.throwIt(ErrorCode.SW_REFERENCE_DATA_NOT_FOUND);
+            }
+            try {
+                puk = GetPUKByReference(p2);
+            } catch(NotFoundException e) {
+                ISOException.throwIt(ErrorCode.SW_REFERENCE_DATA_NOT_FOUND);
+            }
+            if (!CheckExternalOrMutualAuthentication()) {
+                ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+            }
+            // Check length.
+            puk.CheckLength((byte) lc);
+            // Set PUK value
+            puk.update(buf, ISO7816.OFFSET_CDATA, (byte)lc);
+            puk.resetAndUnblock();
+            // Admin is deauthenticated at the end of the process
+            DeauthenticateAllPin();
+        } else {
+            ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
+        }
+
+    }
 
     /**
      * \brief Process the general authentication process
