@@ -1,8 +1,6 @@
 /*
  * This test class is to check generic cryptographic properties of the application by the means of the cryptographic 
  * goal 'authenticity'. 
- * It will be expended for the cryptographic goals 'confidentiality' and 'integrity' by PV204-Security Technologies students 
- from Masaryk University. 
  */
 package com.mysmartlogon.gidsAppletTests;
 
