@@ -35,7 +35,7 @@ public abstract class GidsBaseTestClass {
 
     @Before
     public void setUp() throws Exception {
-        //if (physicalCard != null) return;
+        // If (physicalCard != null) return;
 
         // Using simulator
         if (USE_SIMULATOR) {
@@ -90,7 +90,7 @@ public abstract class GidsBaseTestClass {
                 terminal = terminals.get(TARGET_READER_INDEX); // Prioritize physical card over simulations
 
                 System.out.print("Connecting to card...");
-                physicalCard = terminal.connect("*"); // Connect with the card
+                physicalCard = terminal.connect("*"); // Connect to the card
                 if (physicalCard == null) fail("Failed to connect to card.");
                 System.out.println(" Done.");
 
@@ -109,7 +109,7 @@ public abstract class GidsBaseTestClass {
 
     protected void createcard() {
 
-        //display = false;
+        // Display = false;
         execute("00A4040409A0000003974254465900");
 
         // PIN 0x6C63
@@ -127,19 +127,19 @@ public abstract class GidsBaseTestClass {
         execute("0044000000");
         execute("00E000000E620C8201398302A0148C03032020");
         execute("0044000000");
-        // create admin key
+        // Create admin key
         execute("00 E0 00 00 1C 62 1A 82 01 18 83 02 B0 80 8C 04 87 00 20 FF A5 0B A4 09 80 01 02 83 01 80 95 01 C0");
         execute("0044000000");
-        // set admin key
+        // Set admin key
         execute("00DB3FFF267024840180A51F87180102030405060708010203040506070801020304050607088803B073DC");
-        // set masterfile
+        // Set masterfile
         execute("00DBA00091DF1F818D016d736370000000000000000000000000000000000000000000a00000000000000000000000636172646964000000000020df000012a00000000000000000000000636172646170707300000021df000010a00000000000000000000000636172646366000000000022df000010a000006d7363700000000000636d617066696c6500000023df000010a00000");
         execute("00 DB A0 10 0B DF 21 08 6d 73 63 70 00 00 00 00");
         execute("00 DB A0 10 09 DF 22 06 00 00 00 00 00 00");
         execute("00 DB A0 10 03 DF 23 00");
         execute("00 DB A0 10 13 DF 20 10 00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f");
 
-        // activate
+        // Activate
         execute("00 A4 00 0C 02 3F FF");
         execute("00 44 00 00 00");
         display = true;
@@ -169,25 +169,25 @@ public abstract class GidsBaseTestClass {
         DESKey deskey = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
         deskey.setKey(key, (short) 0);
         new Random().nextBytes(myChallenge);
-        // select admin key
+        // Select admin key
         execute("00 22 81 A4 03 83 01 80");
-        // get a challenge
+        // Get a challenge
         ResponseAPDU response = execute("00 87 00 00 14 7C 12 81 10" + DatatypeConverter.printHexBinary(myChallenge) + "00");
         if (!Arrays.equals(Arrays.copyOfRange(response.getBytes(), 0, 4), new byte[] {0x7C,0x12,(byte) 0x81,0x10})) {
             fail("not a challenge:" + DatatypeConverter.printHexBinary(response.getBytes()));
         }
-        // compute the response
+        // Compute the response
         cardChallenge = Arrays.copyOfRange(response.getBytes(), 4, 20);
-        //solve challenge
-        //R2
+        // Solve challenge
+        // R2
         System.arraycopy(cardChallenge, 0, globalchallenge, 0, 16);
-        //R1
+        // R1
         System.arraycopy(myChallenge, 0, globalchallenge, 16, 16);
-        // keep Z1 random
+        // Keep Z1 random
         globalchallenge[(short)39] = (byte) 0x80;
         cipherDES.init(deskey, Cipher.MODE_ENCRYPT);
         cipherDES.doFinal(globalchallenge, (short) 0, (short)40, challengeresponse, (short) 0);
-        // send the response
+        // Send the response
         String command = "00 87 00 00 2C 7C 2A 82 28" + DatatypeConverter.printHexBinary(challengeresponse);
         
         ResponseAPDU responseAPDU = execute(command, true);
@@ -231,19 +231,19 @@ public abstract class GidsBaseTestClass {
         DESKey deskey = (DESKey) KeyBuilder.buildKey(KeyBuilder.TYPE_DES, KeyBuilder.LENGTH_DES3_3KEY, false);
         deskey.setKey(key, (short) 0);
 
-        // select admin key
+        // Select admin key
         execute("00 22 81 A4 03 83 01 80");
-        // get a challenge
+        // Get a challenge
         ResponseAPDU response = execute("00 87 00 00 04 7C 02 81 00 00");
         if (!Arrays.equals(Arrays.copyOfRange(response.getBytes(), 0, 4), new byte[] {0x7C,0x0A,(byte) 0x81,0x08})) {
             fail("not a challenge:" + DatatypeConverter.printHexBinary(response.getBytes()));
         }
-        // compute the response
+        // Compute the response
         challenge = Arrays.copyOfRange(response.getBytes(), 4, 12);
-        //solve challenge
+        // Solve challenge
         cipherDES.init(deskey, Cipher.MODE_ENCRYPT);
         cipherDES.doFinal(challenge, (short) 0, (short)8, challengeresponse, (short) 0);
-        // send the response
+        // Send the response
         execute("00 87 00 00 0C 7C 0A 82 08" + DatatypeConverter.printHexBinary(challengeresponse), (successexpected?0x9000: 0x6982));
     }
 
