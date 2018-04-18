@@ -46,6 +46,10 @@ public class GidsPINManager {
     private static final byte PIN_MAX_TRIES = 3;
     private static final byte PIN_MIN_LENGTH = 4;
     private static final byte PIN_MAX_LENGTH = 16;
+    // PUK:
+    private static final byte PUK_MAX_TRIES = 3;
+    private static final byte PUK_MIN_LENGTH = 4;
+    private static final byte PUK_MAX_LENGTH = 16;
     // CHALLENGE:
     private static final short CHALLENGE_LENGTH = 16;
     // Application lifecycle state
@@ -62,6 +66,7 @@ public class GidsPINManager {
 
     // an insance of GidsPIN Class
     private GidsPIN pin_pin = null;
+    private GidsPIN puk_puk = null;
     private byte applicationState = CREATION_STATE;
 
     private byte[] ExternalChallenge = null;
@@ -75,6 +80,7 @@ public class GidsPINManager {
     // also specify the challenges, keys and status.
     public GidsPINManager() {
         pin_pin = new GidsPIN(PIN_MAX_TRIES, PIN_MAX_LENGTH, PIN_MIN_LENGTH);
+        puk_puk = new GidsPIN(PUK_MAX_TRIES, PUK_MAX_LENGTH, PUK_MIN_LENGTH);
         ExternalChallenge = JCSystem.makeTransientByteArray(CHALLENGE_LENGTH, JCSystem.CLEAR_ON_DESELECT);
         CardChallenge = JCSystem.makeTransientByteArray(CHALLENGE_LENGTH, JCSystem.CLEAR_ON_DESELECT);
         KeyReference = JCSystem.makeTransientObjectArray((short)1, JCSystem.CLEAR_ON_DESELECT);
@@ -95,6 +101,18 @@ public class GidsPINManager {
             throw NotFoundException.getInstance();
         }
     }
+ 
+    private GidsPIN GetPUKByReference(byte reference) throws NotFoundException {
+         switch(reference) {
+         case (byte) 0x80:
+         case (byte) 0x00:
+             return puk_puk;
+         case (byte) 0x81:
+         
+         default:
+             throw NotFoundException.getInstance();
+         }
+     }
 
     /**
      * Checks if the current application state matches any of the required state(s).
@@ -263,6 +281,7 @@ public class GidsPINManager {
 
     public void DeauthenticateAllPin() {
         pin_pin.reset();
+        puk_puk.reset();
         // deauthenticate admin key
         SetAdminAuthenticationState(ADMIN_NOT_AUTHENTICATED);
         // clear shared key
@@ -270,12 +289,14 @@ public class GidsPINManager {
         KeyReference[0] = null;
     }
 
-    //This function check the User Authentication by first checking the Initialization Mode followed by the PIN validation
+    //This function check the User Authentication by first checking the Initialization Mode followed by the PIN/PUK validation
     private boolean CheckUserAuthentication() {
         // No user authentication required during initialization mode
         if (CheckApplicationState(INITIALIZATION_STATE))
             return true;
-        return pin_pin.isValidated();
+        if (pin_pin.isValidated())
+            return true;
+        return puk_puk.isValidated();
     }
 
    // This function checks the type of authentication is either of CheckExternal Or MutualAuthentication using 
@@ -296,7 +317,7 @@ public class GidsPINManager {
      * \
      // This function CheckACL checks the value of acl, and accordingly put restriction or no restriction.
      // If neither of above case, it will check for the value of acl for type of operation i.e. contact or contactless
-     // After checking the type of operation the type of Authentication required: may be PIN or external (Mutual Authentication)
+     // After checking the type of operation the type of Authentication required: may be PIN/PUK or external (Mutual Authentication)
      // Which is mandatory or not. In all these cases throws an SW_SECURITY_STATUS_NOT_SATISFIED exception if not allowed.
      */
     public void CheckACL(byte acl) {
@@ -323,28 +344,28 @@ public class GidsPINManager {
         }
         byte authentication = (byte)(acl & (byte)0xF0);
         if(authentication  == (byte) 0x90) {
-            // PIN required.
+            // PIN/PUK required.
             if (CheckUserAuthentication()) {
                 return;
             }
             ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
         }
         if ((byte)(authentication&(byte)0x90) == (byte)0x10) {
-            // PIN can valid the ACL
+            // PIN/PUK can valid the ACL
             if (CheckUserAuthentication()) {
                 return;
             }
             // else continue
         }
         if(authentication  == (byte) 0xA0) {
-            // external / mutal authentication mandatory
+            // external / mutual authentication mandatory
             if (CheckExternalOrMutualAuthentication()) {
                 return;
             }
             ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
         }
         if((authentication&(byte)0xA0) == (byte)0x20) {
-            // external or mutal authentication optional
+            // external or mutual authentication optional
             if (CheckExternalOrMutualAuthentication()) {
                 return;
             }
@@ -367,20 +388,21 @@ public class GidsPINManager {
         byte[] buf = apdu.getBuffer();
         short lc;
         GidsPIN pin = null;
+        GidsPIN puk = null;
 
         // P1P2 0001 only at the moment. (key-reference 01 = PIN)
         if(buf[ISO7816.OFFSET_P1] != 0x00) {
             ISOException.throwIt(ISO7816.SW_INCORRECT_P1P2);
         }
 
-        // Deauthenticate PIN if the OFFSET_P2 is 0x82
+        // Deauthenticate PIN/PUK if the OFFSET_P2 is 0x82
         if (buf[ISO7816.OFFSET_P2] == (byte) 0x82) {
             // special resetting code for GIDS
             DeauthenticateAllPin();
             return;
         }
 
-        // Try to get the PIN frm the APDU buffer otherwise throw exception SW_REFERENCE_DATA_NOT_FOUND
+        // Try to get the PIN from the APDU buffer otherwise throw exception SW_REFERENCE_DATA_NOT_FOUND
         try {
             pin = GetPINByReference(buf[ISO7816.OFFSET_P2]);
         } catch(NotFoundException e) {
@@ -433,12 +455,14 @@ public class GidsPINManager {
         byte p2 = buf[ISO7816.OFFSET_P2];
         short lc;
         GidsPIN pin = null;
+        GidsPIN puk = null;
 
         lc = apdu.setIncomingAndReceive();
 
         if (p1 == (byte) 0x01) {
             try {
                 pin = GetPINByReference(p2);
+                puk = GetPUKByReference(p2);
             } catch(NotFoundException e) {
                 ISOException.throwIt(ErrorCode.SW_REFERENCE_DATA_NOT_FOUND);
             }
@@ -448,7 +472,7 @@ public class GidsPINManager {
 
             // authentication not needed for the first pin set
             if (!CheckApplicationState(INITIALIZATION_STATE)) {
-                if (!pin.isValidated()) {
+                if (!pin.isValidated() && !puk.isValidated()) {
                     ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
                 }
             }
@@ -462,6 +486,7 @@ public class GidsPINManager {
         } else if (p1 == (byte) 0x00) {
             try {
                 pin = GetPINByReference(buf[ISO7816.OFFSET_P2]);
+                puk = GetPUKByReference(buf[ISO7816.OFFSET_P2]);
             } catch(NotFoundException e) {
                 ISOException.throwIt(ErrorCode.SW_REFERENCE_DATA_NOT_FOUND);
             }
@@ -472,12 +497,13 @@ public class GidsPINManager {
             }
 
             byte currentPinLength = pin.GetCurrentPINLen();
+            byte currentPukLength = puk.GetCurrentPINLen();
             // if the current pin is very long and the tested pin is very short, force the verification to decreate the remaining try count
             // do not allow the revelation of currentPinLength until pin.check is done
             if (lc < currentPinLength) {
                 currentPinLength = (byte) lc;
             }
-            if (pin.getTriesRemaining() == (byte) 0) {
+            if (pin.getTriesRemaining() == (byte) 0 && puk.getTriesRemaining() == (byte) 0 ) {
                 // pin blocked
                 ISOException.throwIt(ISO7816.SW_FILE_INVALID);
             }
@@ -778,6 +804,32 @@ public class GidsPINManager {
         buf[6] = (byte) 0x93;
         buf[7] = (byte) 0x01;
         buf[8] = pin.getTryLimit();
+        apdu.setOutgoing();
+        apdu.setOutgoingLength((short)9);
+        apdu.sendBytes((short) 0, (short) 9);
+    }
+ 
+ public void returnPUKStatus(APDU apdu, short id) {
+        byte[] buf = apdu.getBuffer();
+        GidsPIN puk = null;
+        switch(id) {
+        default:
+            ISOException.throwIt(ErrorCode.SW_REFERENCE_DATA_NOT_FOUND);
+            break;
+        case (short) 0x7F71:
+        case (short) 0x7F72:
+            puk = puk_puk;
+            break;
+        }
+       // APDU is generated with the status of PIN which include the number of tries remaining and the try limit.
+        Util.setShort(buf, (short) 0, id);
+        buf[2] = (byte) 0x06;
+        buf[3] = (byte) 0x97;
+        buf[4] = (byte) 0x01;
+        buf[5] = puk.getTriesRemaining();
+        buf[6] = (byte) 0x93;
+        buf[7] = (byte) 0x01;
+        buf[8] = puk.getTryLimit();
         apdu.setOutgoing();
         apdu.setOutgoingLength((short)9);
         apdu.sendBytes((short) 0, (short) 9);
