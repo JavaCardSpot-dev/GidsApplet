@@ -334,8 +334,9 @@ public class TransmitManager {
 
         // We have 256 bytes send-capacity per APDU.
         short sendLen = remaininglen > le ? le : remaininglen;
-        apdu.setOutgoingLength(sendLen);
-        apdu.sendBytesLong(data, pos, sendLen);
+        apdu.setOutgoingLength((short)sendLen);
+        apdu.sendBytesLong(data, pos, (short)sendLen);
+
         // The position when using Record[] is maintained by copyRecordsToRamBuf
         if (chaining_object[CHAINING_OBJECT] == null || !(chaining_object[CHAINING_OBJECT] instanceof Record[])) {
             chaining_cache[RAM_CHAINING_CACHE_OFFSET_CURRENT_POS]+= sendLen;
@@ -345,8 +346,8 @@ public class TransmitManager {
             chaining_cache[RAM_CHAINING_CACHE_OFFSET_BYTES_REMAINING] -= sendLen;
         }
         remaininglen -= sendLen;
-        if(remaininglen > 0) {
-            short nextRespLen = remaininglen > 256 ? 256 : remaininglen;
+        if(remaininglen > (short)0) {
+            short nextRespLen = remaininglen > (short)256 ? (short)256 : remaininglen;
             ISOException.throwIt( (short)(ISO7816.SW_BYTES_REMAINING_00 | nextRespLen) );
         } else {
             // Clear RAM buffer and set cache index & parameters to 0(Zero)

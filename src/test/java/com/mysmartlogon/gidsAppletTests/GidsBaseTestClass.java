@@ -26,12 +26,12 @@ import javacard.security.KeyBuilder;
 import javacardx.crypto.Cipher;
 
 public abstract class GidsBaseTestClass {
-    final boolean USE_SIMULATOR = true;
+    final boolean USE_SIMULATOR = false;
     private final int TARGET_READER_INDEX = 0;
 
     static Card physicalCard = null;
     JavaxSmartCardInterface simulator = null;
-    private boolean display = true;
+    private boolean display = false;
 
     @Before
     public void setUp() throws Exception {
@@ -57,15 +57,15 @@ public abstract class GidsBaseTestClass {
             List<CardTerminal> terminals = new ArrayList<>();
 
             System.out.print("Installing applet...");
-            try {
-                Process p1 = Runtime.getRuntime().exec("java -jar ext/gp.jar -uninstall build/javacard/GidsApplet.cap");
-                p1.waitFor();
-                Process p2 = Runtime.getRuntime().exec("java -jar ext/gp.jar -install build/javacard/GidsApplet.cap -default");
-                p2.waitFor();
-                System.out.println(" Done.");
-            } catch (Exception e) {
-                e.printStackTrace();
-                fail("Failed to install applet.");
+                try {
+                    Process p1 = Runtime.getRuntime().exec("java -jar ext/gp.jar -uninstall build/javacard/GidsApplet.cap");
+                    p1.waitFor();
+                    Process p2 = Runtime.getRuntime().exec("java -jar ext/gp.jar -install build/javacard/GidsApplet.cap -default");
+                    p2.waitFor();
+                    System.out.println(" Done.");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    fail("Failed to install applet.");
             }
 
             boolean card_found = false;
@@ -142,7 +142,7 @@ public abstract class GidsBaseTestClass {
         // Activate
         execute("00 A4 00 0C 02 3F FF");
         execute("00 44 00 00 00");
-        display = true;
+        //display = true;
     }
 
     protected void authenticateGeneral() {
@@ -261,7 +261,7 @@ public abstract class GidsBaseTestClass {
     }
 
     protected ResponseAPDU execute(String Command, int expectedReturn) {
-        ResponseAPDU response = execute(Command,display);
+        ResponseAPDU response = execute(Command, display);
         if(response.getSW() != expectedReturn) {
             fail("expected: " + Integer.toHexString(expectedReturn) + " but was: " + Integer.toHexString(response.getSW()));
         }
