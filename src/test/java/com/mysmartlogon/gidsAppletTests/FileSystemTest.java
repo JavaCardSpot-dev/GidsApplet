@@ -189,18 +189,6 @@ public class FileSystemTest extends GidsBaseTestClass {
         execute("00350001", 0x6986);
         // Command GetVersion APDU
         execute("00350000", "00069000");
-        
-        // Get Response from Command and verify Version 0006
-         ResponseAPDU responseAPDU = execute("00350000", "00069000");
-        
-        /* 
-        byte[] responseBytes = responseAPDU.getBytes();
-         if (responseBytes != null && responseBytes.length == 4) {
-			System.out.println("Applet version " + responseBytes[0] + "."+ responseBytes[1]);
-            //System.out.println("Applet version " + Integer.toHexString(responseBytes[0]) + "."+ Integer.toHexString(responseBytes[1]));
-	    }
-        */            
-			
     }
     
     @Test
