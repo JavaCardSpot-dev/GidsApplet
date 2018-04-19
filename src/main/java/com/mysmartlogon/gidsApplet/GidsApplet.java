@@ -49,6 +49,20 @@ public class GidsApplet extends Applet {
     /* API Version */
     public static final byte API_VERSION_MAJOR = (byte) 0x00;
     public static final byte API_VERSION_MINOR = (byte) 0x06;
+    
+    /* Repository Info */
+    // "https://github.com/JavaCardSpot-dev/GidsApplet"
+    public static final byte[] API_REPOSITORY_INFO = {(byte) 0x68 ,(byte) 0x74 ,(byte) 0x74 ,(byte) 0x70 ,(byte) 0x73 ,
+                                                      (byte) 0x3a ,(byte) 0x2f ,(byte) 0x2f ,(byte) 0x67 ,(byte) 0x69 ,
+                                                      (byte) 0x74 ,(byte) 0x68 ,(byte) 0x75 ,(byte) 0x62 ,(byte) 0x2e ,
+                                                      (byte) 0x63 ,(byte) 0x6f ,(byte) 0x6d ,(byte) 0x2f ,(byte) 0x4a ,
+                                                      (byte) 0x61 ,(byte) 0x76 ,(byte) 0x61 ,(byte) 0x43 ,(byte) 0x61 ,
+                                                      (byte) 0x72 ,(byte) 0x64 ,(byte) 0x53 ,(byte) 0x70 ,(byte) 0x6f ,
+                                                      (byte) 0x74 ,(byte) 0x2d ,(byte) 0x64 ,(byte) 0x65 ,(byte) 0x76 ,
+                                                      (byte) 0x2f ,(byte) 0x47 ,(byte) 0x69 ,(byte) 0x64 ,(byte) 0x73 ,
+                                                      (byte) 0x41 ,(byte) 0x70 ,(byte) 0x70 ,(byte) 0x6c ,(byte) 0x65 ,
+                                                      (byte) 0x74 };
+    
 
     /* Card-specific configuration */
     public static final boolean DEF_PRIVATE_KEY_IMPORT_ALLOWED = true;
@@ -74,8 +88,11 @@ public class GidsApplet extends Applet {
     public static final byte INS_GET_DATA = (byte) 0xCB;
     public static final byte INS_ACTIVATE_FILE = (byte) 0x44;
     public static final byte INS_TERMINATE_DF = (byte) 0xE6;
+    
     // Get VERSION INS
     public static final byte INS_VERSION = (byte) 0x35;
+    // Get Repository Info
+    public static final byte INS_REPOSITORY_INFO = (byte) 0x36;
 
     private GidsPINManager pinManager = null;
 
@@ -275,6 +292,11 @@ public class GidsApplet extends Applet {
             case INS_VERSION:
                 getVersion(apdu);
                 break;	
+            
+            // Get the Repository Info
+            case INS_REPOSITORY_INFO:
+                getRepositoryInfo(apdu);
+                break;
 
                     
             // Compare the stored data in the card with the reference data of verification data from interface        
@@ -908,7 +930,28 @@ public class GidsApplet extends Applet {
         // sending the version of Applet
         apdu.setOutgoingAndSend((short)ISO7816.OFFSET_CDATA, (short)2);
     }
+/* Function to Get Repository Info*/
+    protected void getRepositoryInfo(APDU apdu)
+    {
 
+        byte[] buf = apdu.getBuffer();
+        apdu.setIncomingAndReceive();
+        // Get p1, p2 from the APDU
+        byte p1 = buf[ISO7816.OFFSET_P1];
+        byte p2 = buf[ISO7816.OFFSET_P2];
+
+        // Check the correctness of p1-p2 of the APDU
+        if (p1 != (byte) 0x00 || p2 != (byte) 0x00 ) {
+            ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
+        }
+
+        // API_REPOSITORY_INFO.length = 46
+        // Copy URL Hex Data to OutData
+        Util.arrayCopyNonAtomic(API_REPOSITORY_INFO,(short) 0,buf, ISO7816.OFFSET_CDATA, (short)API_REPOSITORY_INFO.length);
+        // sending the version of Applet
+        apdu.setOutgoingAndSend((short)ISO7816.OFFSET_CDATA, (short)API_REPOSITORY_INFO.length);
+
+    }
 
     
     /**
