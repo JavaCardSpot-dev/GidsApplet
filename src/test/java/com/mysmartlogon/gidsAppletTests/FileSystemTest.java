@@ -199,6 +199,27 @@ public class FileSystemTest extends GidsBaseTestClass {
 	    }
     }
     
+    // Test for Repository Info
+    @Test
+    public void testGetRepositoryInfo() throws Exception {
+        //authenticatePin();
+        // Command Not Allowed with wrong APDU
+        execute("00360001", 0x6986);
+
+        // Command GetRepositoryInfo APDU
+        execute("00360000", "68747470733A2F2F6769746875622E636F6D2F4A6176614361726453706F742D6465762F476964734170706C65749000");
+
+        // Get Response from Command and verify Repository
+        ResponseAPDU responseAPDU = execute("00360000");
+        byte[] responseBytes = responseAPDU.getBytes();
+        if (responseBytes != null && responseBytes.length == (short)48) {
+            System.out.println("Repository URL:" + responseBytes);
+        }
+    }
+
+	
+	
+	
     @Test
     public void testPutGetData() {
         authenticatePin();
