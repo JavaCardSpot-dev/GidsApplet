@@ -181,6 +181,13 @@ public class FileSystemTest extends GidsBaseTestClass {
         }
     }
 
+    // Test for Version
+    @Test
+    public void testGetVersion() {
+        authenticatePin();
+        execute("00350000", "0006");
+    }
+    
     @Test
     public void testPutGetData() {
         authenticatePin();
