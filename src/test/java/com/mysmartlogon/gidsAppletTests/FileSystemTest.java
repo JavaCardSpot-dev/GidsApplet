@@ -184,8 +184,17 @@ public class FileSystemTest extends GidsBaseTestClass {
     // Test for Version
     @Test
     public void testGetVersion() {
-        authenticatePin();
-        execute("00350000", "0006");
+        //authenticatePin();
+        // Command Not Allowed with wrong APDU
+        execute("00350001", 0x6986);
+        // Command GetVersion APDU
+        execute("00350000", "9000");
+        
+        // Get Response from Command and verify Version 0006
+        // ResponseAPDU response = execute("00350000", "9000");
+        // byte[] responseBytes = response.getBytes();
+        
+
     }
     
     @Test
