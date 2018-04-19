@@ -198,10 +198,9 @@ public class FileSystemTest extends GidsBaseTestClass {
          if (responseBytes != null && responseBytes.length == 4) {
 			System.out.println("Applet version " + responseBytes[0] + "."+ responseBytes[1]);
             //System.out.println("Applet version " + Integer.toHexString(responseBytes[0]) + "."+ Integer.toHexString(responseBytes[1]));
+	    }
         */            
 			
-}
-
     }
     
     @Test
