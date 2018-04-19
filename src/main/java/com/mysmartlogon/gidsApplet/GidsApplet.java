@@ -64,6 +64,7 @@ public class GidsApplet extends Applet {
     public static final byte INS_CHANGE_REFERENCE_DATA = (byte) 0x24;
     public static final byte INS_GENERATE_ASYMMETRIC_KEYPAIR = (byte) 0x47;
     public static final byte INS_RESET_RETRY_COUNTER = (byte) 0x2C;
+    public static final byte INS_RESET_RETRY_COUNTER_PUK = (byte) 0x1E;
     public static final byte INS_MANAGE_SECURITY_ENVIRONMENT = (byte) 0x22;
     public static final byte INS_PERFORM_SECURITY_OPERATION = (byte) 0x2A;
     public static final byte INS_GET_RESPONSE = (byte) 0xC0;
@@ -251,6 +252,11 @@ public class GidsApplet extends Applet {
             // Reset the reference data entry counter to its initial value      
             case INS_RESET_RETRY_COUNTER: 
                 pinManager.processResetRetryCounter(apdu);
+                break;
+                    
+            // Reset the reference data entry counter for PUK to its initial value      
+            case INS_RESET_RETRY_COUNTER_PUK: 
+                pinManager.processResetRetryCounterPUK(apdu);
                 break;
                     
             // Select an application by using its application ID (AID)        
