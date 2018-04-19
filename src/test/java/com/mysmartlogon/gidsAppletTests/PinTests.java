@@ -108,11 +108,10 @@ public class PinTests extends GidsBaseTestClass {
         execute("00 20 00 80 07 31 32 33 34 35 36 37", 0x63C1);
         execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701019301039000");
         // Bad PIN
-        // execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C1);
-        // execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701019301039000");
+        execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C0);
+        execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701009301039000");
         // Good PIN
-        execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
-        execute("00 CB 3F FF 04 5C 02 7F 71 00", "7F71069701039301039000");
+        execute("00 20 00 80 08 31 32 33 34 35 36 37 38", 0x6983);
     }
     
     @Test
@@ -171,7 +170,7 @@ public class PinTests extends GidsBaseTestClass {
     }
 
     @Test
-    public void testBlockPin() {
+    public void testBlockAndUnblockPin() {
         execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
         // Bad PIN          Response Error:  0x63 Cx (Comparison failed and x=3,2,1 tries remain)
         execute("00 20 00 80 08 31 32 33 34 35 36 37 37", 0x63C2);
