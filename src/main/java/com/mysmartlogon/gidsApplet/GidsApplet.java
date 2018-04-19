@@ -74,6 +74,8 @@ public class GidsApplet extends Applet {
     public static final byte INS_GET_DATA = (byte) 0xCB;
     public static final byte INS_ACTIVATE_FILE = (byte) 0x44;
     public static final byte INS_TERMINATE_DF = (byte) 0xE6;
+    // Get VERSION INS
+    public static final byte INS_VERSION = (byte) 0x35;
 
     private GidsPINManager pinManager = null;
 
@@ -268,6 +270,12 @@ public class GidsApplet extends Applet {
             case INS_TERMINATE_DF: 
                 processTerminateDF(apdu);
                 break;
+
+            // Get the Version
+            case INS_VERSION:
+                getVersion(apdu);
+                break;	
+
                     
             // Compare the stored data in the card with the reference data of verification data from interface        
             case INS_VERIFY: 
@@ -877,7 +885,32 @@ public class GidsApplet extends Applet {
             fs.processPutData(apdu);
         }
     }
+    
+    
+    /*
+    * \ Function to Get VERSION
+    */
+        protected void getVersion(APDU apdu)
+    {
+        byte[] buf = apdu.getBuffer();
+        apdu.setIncomingAndReceive();
+        // Get p1, p2 from the APDU
+        byte p1 = buf[ISO7816.OFFSET_P1];
+        byte p2 = buf[ISO7816.OFFSET_P2];
 
+        // Check the correctness of p1-p2 of the APDU
+        if (p1 != (byte) 0x00 || p2 != (byte) 0x00 ) {
+            ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
+        }
+        //buf[ISO7816.OFFSET_CDATA] = 0x01;
+        buf[ISO7816.OFFSET_CDATA ] = API_VERSION_MAJOR;
+        buf[ISO7816.OFFSET_CDATA + 1] = API_VERSION_MINOR;
+        // sending the version of Applet
+        apdu.setOutgoingAndSend((short)ISO7816.OFFSET_CDATA, (short)2);
+    }
+
+
+    
     /**
      * \brief Upload and import a usable private key.
      *
