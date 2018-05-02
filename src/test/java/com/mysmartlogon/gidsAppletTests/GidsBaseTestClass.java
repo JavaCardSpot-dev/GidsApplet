@@ -6,10 +6,7 @@ package com.mysmartlogon.gidsAppletTests;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import javax.smartcardio.*;
 import javax.xml.bind.DatatypeConverter;
@@ -26,7 +23,7 @@ import javacard.security.KeyBuilder;
 import javacardx.crypto.Cipher;
 
 public abstract class GidsBaseTestClass {
-    final boolean USE_SIMULATOR = true;
+    final boolean USE_SIMULATOR = false;
     private final int TARGET_READER_INDEX = 0;
 
     static Card physicalCard = null;
@@ -35,7 +32,7 @@ public abstract class GidsBaseTestClass {
 
     @Before
     public void setUp() throws Exception {
-        // If (physicalCard != null) return;
+        perfMap.clear();
 
         // Using simulator
         if (USE_SIMULATOR) {
@@ -253,7 +250,6 @@ public abstract class GidsBaseTestClass {
         if (!Arrays.equals(response.getBytes(), expected)) {
             fail("expected: " + expectedresponse.replaceAll("\\s","") + " but was: " + DatatypeConverter.printHexBinary(response.getBytes()));
         }
-
     }
 
     protected ResponseAPDU execute(String Command) {
@@ -289,4 +285,35 @@ public abstract class GidsBaseTestClass {
         if (display) System.out.println(DatatypeConverter.printHexBinary(response.getBytes()));
         return response;
     }
+
+    protected ResponseAPDU executePerf(String command) {
+        return executePerf(command, 0x9000);
+    }
+
+    protected ResponseAPDU executePerf(String command, int expectedReturn) {
+        long timeBefore = System.currentTimeMillis();
+        ResponseAPDU res = execute(command, expectedReturn);
+        long timeAfter = System.currentTimeMillis();
+        String insKey = command.replaceAll("\\s","").substring(2,4);
+        if (!perfMap.containsKey(insKey))
+            perfMap.put(insKey, new LinkedList<Long>());
+        perfMap.get(insKey).add(timeAfter - timeBefore);
+        return res;
+    }
+
+    protected void printPerf () {
+        // Print results
+        for (String insKey : perfMap.keySet()) {
+            List<Long> timeList = perfMap.get(insKey);
+            System.out.print(String.format("> %s : ", insKey));
+            long timeTotal = 0;
+            for (long time : timeList) {
+                //System.out.print(String.format("%d ", time));
+                timeTotal += time;
+            }
+            System.out.println(String.format("(mean = %d) (samples = %d)", timeTotal / timeList.size(), timeList.size()));
+        }
+    }
+
+    private Map<String, List<Long>> perfMap = new HashMap<String, List<Long>>();
 }

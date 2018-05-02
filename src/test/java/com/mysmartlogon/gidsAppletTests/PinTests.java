@@ -156,15 +156,15 @@ public class PinTests extends GidsBaseTestClass {
     
 
     @Test
-    public void testChangePIN() {
-        // Good PIN
-        execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
-        // Change PIN  00 24 00 80 len old_pin new_pin
-        execute("00 24 00 80 10 31 32 33 34 35 36 37 38 31 32 33 34 35 36 37 37");
-        // Try old one
-        execute("00 20 00 80 08 31 32 33 34 35 36 37 38", 0x63C2);
-        // Try new one
-        execute("00 20 00 80 08 31 32 33 34 35 36 37 37");
+        public void testChangePIN() {
+            // Good PIN
+            execute("00 20 00 80 08 31 32 33 34 35 36 37 38");
+            // Change PIN  00 24 00 80 len old_pin new_pin
+            execute("00 24 00 80 10 31 32 33 34 35 36 37 38 31 32 33 34 35 36 37 37");
+            // Try old one
+            execute("00 20 00 80 08 31 32 33 34 35 36 37 38", 0x63C2);
+            // Try new one
+            execute("00 20 00 80 08 31 32 33 34 35 36 37 37");
         // Change PIN again
         execute("00 24 00 80 10 31 32 33 34 35 36 37 37 31 32 33 34 35 36 37 38");
     }
@@ -239,7 +239,7 @@ public class PinTests extends GidsBaseTestClass {
         // Select admin key
         execute("00 22 81 A4 03 83 01 80");
         // Get a challenge
-        ResponseAPDU response = execute("00 87 00 00 04 7C 02 81 00 00");
+        ResponseAPDU response = executePerf("00 87 00 00 04 7C 02 81 00 00");
         if (!Arrays.equals(Arrays.copyOfRange(response.getBytes(), 0, 4), new byte[] {0x7C,0x0A,(byte) 0x81,0x08})) {
             fail("not a challenge:" + DatatypeConverter.printHexBinary(response.getBytes()));
         }
@@ -251,6 +251,8 @@ public class PinTests extends GidsBaseTestClass {
         // Send the response
         execute("00 87 00 00 0C 7C 0A 82 08" + DatatypeConverter.printHexBinary(challengeresponse), 0x9000);
         execute("00 87 00 00 0C 7C 0A 82 08" + DatatypeConverter.printHexBinary(challengeresponse), 0x6985);
+
+        printPerf();
     }
 
     @Test

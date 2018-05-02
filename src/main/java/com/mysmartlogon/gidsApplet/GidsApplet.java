@@ -70,8 +70,8 @@ public class GidsApplet extends Applet {
     /* ISO constants not in the "ISO7816" interface */
     // File system related INS:
     public static final byte INS_CREATE_FILE = (byte) 0xE0;
-    public static final byte INS_UPDATE_BINARY = (byte) 0xD6;
-    public static final byte INS_READ_BINARY = (byte) 0xB0;
+    //public static final byte INS_UPDATE_BINARY = (byte) 0xD6;
+    //public static final byte INS_READ_BINARY = (byte) 0xB0;
     public static final byte INS_DELETE_FILE = (byte) 0xE4;
     // Other INS:
     public static final byte INS_VERIFY = (byte) 0x20;
@@ -83,7 +83,7 @@ public class GidsApplet extends Applet {
     public static final byte INS_PERFORM_SECURITY_OPERATION = (byte) 0x2A;
     public static final byte INS_GET_RESPONSE = (byte) 0xC0;
     public static final byte INS_PUT_DATA = (byte) 0xDB;
-    public static final byte INS_GET_CHALLENGE = (byte) 0x84;
+    //public static final byte INS_GET_CHALLENGE = (byte) 0x84;
     public static final byte INS_GENERAL_AUTHENTICATE = (byte) 0x87;
     public static final byte INS_GET_DATA = (byte) 0xCB;
     public static final byte INS_ACTIVATE_FILE = (byte) 0x44;
@@ -93,6 +93,8 @@ public class GidsApplet extends Applet {
     public static final byte INS_VERSION = (byte) 0x35;
     // Get Repository Info
     public static final byte INS_REPOSITORY_INFO = (byte) 0x36;
+    // Performance test
+    public final static byte INS_PERF_SETSTOP = (byte) 0xf5;
 
     private GidsPINManager pinManager = null;
 
@@ -117,7 +119,7 @@ public class GidsApplet extends Applet {
      * \param bLength
      *			the length in bytes of the parameter data in bArray
      */
-    
+
     // Normally installed only once
     public static void install(byte[] bArray, short bOffset, byte bLength) {
         new GidsApplet();
@@ -130,7 +132,7 @@ public class GidsApplet extends Applet {
 
         // By default the pin manager is in "initialization mode"
         pinManager = new GidsPINManager();
-    
+
         transmitManager = new TransmitManager();
 
         currentAlgorithmRef = JCSystem.makeTransientByteArray((short)1, JCSystem.CLEAR_ON_DESELECT);
@@ -155,26 +157,26 @@ public class GidsApplet extends Applet {
         byte mechanisms =  (byte) 0xC0;
         // FCI / FMD / FCP are hard coded
         fs = new GidsFileSystem(pinManager, transmitManager, (short) 0x3F00,
-                                // FCP
-                                new byte[]	{
-                                    (byte)0x62, (byte)0x08,
-                                    (byte)0x82, (byte)0x01, (byte)0x38, // File descriptor byte.
-                                    (byte)0x8C, (byte)0x03, (byte)0x03, (byte)0x30, (byte)0x30,// Security attribute
-                                },
-                                // FCI
-                                new byte[]	{
-                                    0x61, 0X12,
-                                    0x4F, 0x0B, (byte) 0xA0, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x97, (byte) 0x42, (byte) 0x54, (byte) 0x46, (byte) 0x59, 0x02, 0x01, // AID
-                                    0x73, 0x03,
-                                    0x40, 0x01, mechanisms, // Cryptographic mechanism
-                                },
-                                // FMD
-                                new byte[]	{
-                                    (byte)0x64, (byte)0x09,
-                                    (byte)0x5F, (byte)0x2F, (byte) 0x01, (byte) 0x60, // PIN usage policy
-                                    (byte)0x7F, (byte)0x65, 0x02, (byte) 0x80, 0x00
-                                }
-                               );
+                // FCP
+                new byte[]	{
+                        (byte)0x62, (byte)0x08,
+                        (byte)0x82, (byte)0x01, (byte)0x38, // File descriptor byte.
+                        (byte)0x8C, (byte)0x03, (byte)0x03, (byte)0x30, (byte)0x30,// Security attribute
+                },
+                // FCI
+                new byte[]	{
+                        0x61, 0X12,
+                        0x4F, 0x0B, (byte) 0xA0, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x97, (byte) 0x42, (byte) 0x54, (byte) 0x46, (byte) 0x59, 0x02, 0x01, // AID
+                        0x73, 0x03,
+                        0x40, 0x01, mechanisms, // Cryptographic mechanism
+                },
+                // FMD
+                new byte[]	{
+                        (byte)0x64, (byte)0x09,
+                        (byte)0x5F, (byte)0x2F, (byte) 0x01, (byte) 0x60, // PIN usage policy
+                        (byte)0x7F, (byte)0x65, 0x02, (byte) 0x80, 0x00
+                }
+        );
 
         // Enabling initialization mode
         pinManager.SetApplicationState(GidsPINManager.INITIALIZATION_STATE);
@@ -187,7 +189,6 @@ public class GidsApplet extends Applet {
      *\ reset pin parameters to PIN_MAX_TRIES, PIN_MAX_LENGTH, PIN_MIN_LENGTH
      */
     public void deselect() {
-        // 
         pinManager.DeauthenticateAllPin();
     }
 
@@ -208,103 +209,104 @@ public class GidsApplet extends Applet {
         }
 
         transmitManager.processChainInitialization(apdu);
-        
+
         // Instructions and their applications according to APDU receieved
 
         if((buffer[ISO7816.OFFSET_CLA] & 0xE0) == 0) {
             switch (ins) {
-            // Change the file state from creation to operational states
-            case INS_ACTIVATE_FILE:
-                fs.processActivateFile(apdu);
-                break;
-                    
-            // Create an elementary file (EF) under the current application (DF)
-            case INS_CREATE_FILE: 
-                fs.processCreateFile(apdu);
-                break;
-                    
-            // Change card password conditionally
-            case INS_CHANGE_REFERENCE_DATA: 
-                pinManager.processChangeReferenceData(apdu);
-                break;
-                    
-            // Delete selected file
-            case INS_DELETE_FILE: 
-                fs.processDeleteFile(apdu);
-                break;
-                    
-            // Perform external, internal or mutual authentication
-            case INS_GENERAL_AUTHENTICATE: 
-                pinManager.processGeneralAuthenticate(apdu);
-                break;
-                    
-            // Generate asymmetric keypair for RSA or ECC, and store them
-            case INS_GENERATE_ASYMMETRIC_KEYPAIR: 
-                processGenerateAsymmetricKeypair(apdu);
-                break;
-                    
-            // Retrieve the data content of data object (DO) with the same tag as given in data field
-            case INS_GET_DATA: 
-                processGetData(apdu);
-                break;
-                    
-            // Return the value of response returned by command
-            case INS_GET_RESPONSE: 
-                transmitManager.processGetResponse(apdu);
-                break;
-                    
-            // Prepare INS_GENERAL_AUTHENTICATE and INS_PERFORM_SECURITY_OPERATION commands
-            case INS_MANAGE_SECURITY_ENVIRONMENT: 
-                processManageSecurityEnvironment(apdu);
-                break;
-                    
-            // Compute checksum/digital signature, calculate hash-code, verify checksum/digital signature, encrypt or decrypt        
-            case INS_PERFORM_SECURITY_OPERATION: 
-                processPerformSecurityOperation(apdu);
-                break;
-                    
-            // Create or replace the content of a single data object in the current application
-            case INS_PUT_DATA: 
-                processPutData(apdu);
-                break;
-                    
-            // Reset the reference data entry counter to its initial value      
-            case INS_RESET_RETRY_COUNTER: 
-                pinManager.processResetRetryCounter(apdu);
-                break;
-                    
-            // Reset the reference data entry counter for PUK to its initial value      
-            case INS_RESET_RETRY_COUNTER_PUK: 
-                pinManager.processResetRetryCounterPUK(apdu);
-                break;
-                    
-            // Select an application by using its application ID (AID)        
-            case ISO7816.INS_SELECT: 
-                fs.processSelectFile(apdu, selectingApplet());
-                break;
-                    
-            // Terminate the current application       
-            case INS_TERMINATE_DF: 
-                processTerminateDF(apdu);
-                break;
+                // Performance test
+                case INS_PERF_SETSTOP:
+                    PM.m_perfStop = Util.makeShort(buffer[ISO7816.OFFSET_CDATA], buffer[(short) (ISO7816.OFFSET_CDATA + 1)]);
+                    break;
 
-            // Get the Version
-            case INS_VERSION:
-                getVersion(apdu);
-                break;	
-            
-            // Get the Repository Info
-            case INS_REPOSITORY_INFO:
-                getRepositoryInfo(apdu);
-                break;
+                // Change the file state from creation to operational states
+                case INS_ACTIVATE_FILE:
+                    fs.processActivateFile(apdu);
+                    PM.check(PMC.TRAP_ACTIVATEFILE_1);
+                    break;
 
-                    
-            // Compare the stored data in the card with the reference data of verification data from interface        
-            case INS_VERIFY: 
-                pinManager.processVerify(apdu);
-                break;
-            default:
-                ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+                // Create an elementary file (EF) under the current application (DF)
+                case INS_CREATE_FILE:
+                    fs.processCreateFile(apdu);
+                    break;
+
+                // Change card password conditionally
+                case INS_CHANGE_REFERENCE_DATA:
+                    pinManager.processChangeReferenceData(apdu);
+                    break;
+
+                // Delete selected file
+                case INS_DELETE_FILE:
+                    fs.processDeleteFile(apdu);
+                    break;
+
+                // Perform external, internal or mutual authentication
+                case INS_GENERAL_AUTHENTICATE:
+                    pinManager.processGeneralAuthenticate(apdu);
+                    break;
+
+                // Generate asymmetric keypair for RSA or ECC, and store them
+                case INS_GENERATE_ASYMMETRIC_KEYPAIR:
+                    processGenerateAsymmetricKeypair(apdu);
+                    break;
+
+                // Retrieve the data content of data object (DO) with the same tag as given in data field
+                case INS_GET_DATA:
+                    processGetData(apdu);
+                    break;
+
+                // Return the value of response returned by command
+                case INS_GET_RESPONSE:
+                    transmitManager.processGetResponse(apdu);
+                    break;
+
+                // Prepare INS_GENERAL_AUTHENTICATE and INS_PERFORM_SECURITY_OPERATION commands
+                case INS_MANAGE_SECURITY_ENVIRONMENT:
+                    processManageSecurityEnvironment(apdu);
+                    break;
+
+                // Compute checksum/digital signature, calculate hash-code, verify checksum/digital signature, encrypt or decrypt
+                case INS_PERFORM_SECURITY_OPERATION:
+                    processPerformSecurityOperation(apdu);
+                    break;
+
+                // Create or replace the content of a single data object in the current application
+                case INS_PUT_DATA:
+                    processPutData(apdu);
+                    break;
+
+                // Reset the reference data entry counter to its initial value
+                case INS_RESET_RETRY_COUNTER:
+                    pinManager.processResetRetryCounter(apdu);
+                    break;
+
+                // Reset the reference data entry counter for PUK to its initial value
+                case INS_RESET_RETRY_COUNTER_PUK:
+                    pinManager.processResetRetryCounterPUK(apdu);
+                    break;
+
+                // Select an application by using its application ID (AID)
+                case ISO7816.INS_SELECT:
+                    fs.processSelectFile(apdu, selectingApplet());
+                    break;
+
+                // Terminate the current application
+                case INS_TERMINATE_DF:
+                    processTerminateDF(apdu);
+                    break;
+
+                // Get the Version
+                case INS_VERSION:
+                    getVersion(apdu);
+                    break;
+
+
+                // Compare the stored data in the card with the reference data of verification data from interface
+                case INS_VERIFY:
+                    pinManager.processVerify(apdu);
+                    break;
+                default:
+                    ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
             } // Switch
         } else {
             ISOException.throwIt(ISO7816.SW_CLA_NOT_SUPPORTED);
@@ -312,7 +314,7 @@ public class GidsApplet extends Applet {
     }
 
 
-    /* 
+    /*
      * Change the life-cycle of the application from 'operational' to 'terminated'
      * when INS_TERMINATE_DF is set and (P1, P2) is equal to (0x00, 0x00)
      * as well as an external authentication is verified
@@ -336,13 +338,13 @@ public class GidsApplet extends Applet {
     }
 
     /**
-         * \brief Process the GET DATA apdu (INS = CA)
-         *
-         * This APDU can be used to request the following data:
-         *   P1P2 = 0x1001: Applet version and features
-         *
-         * \param apdu The apdu to process.
-         */
+     * \brief Process the GET DATA apdu (INS = CA)
+     *
+     * This APDU can be used to request the following data:
+     *   P1P2 = 0x1001: Applet version and features
+     *
+     * \param apdu The apdu to process.
+     */
     private void processGetData(APDU apdu) throws ISOException {
         byte[] buf = apdu.getBuffer();
         byte p1 = buf[ISO7816.OFFSET_P1];
@@ -505,18 +507,18 @@ public class GidsApplet extends Applet {
         // Try to generate RSA key pair of size 1024/2048 
         try {
             switch(algID) {
-            case (byte)0x06:
-                kp = new KeyPair(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_1024);
-                break;
-            case (byte)0x07:
-                kp = new KeyPair(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_2048);
-                break;
-            default:
-                ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
-                break;
+                case (byte)0x06:
+                    kp = new KeyPair(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_1024);
+                    break;
+                case (byte)0x07:
+                    kp = new KeyPair(KeyPair.ALG_RSA_CRT, KeyBuilder.LENGTH_RSA_2048);
+                    break;
+                default:
+                    ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
+                    break;
             }
             kp.genKeyPair();
-            
+
             // Special Feitian workaround for A40CR and A22CR cards
             RSAPrivateCrtKey priKey = (RSAPrivateCrtKey) kp.getPrivate();
             short pLen = priKey.getP(buf, (short) 0);
@@ -524,7 +526,7 @@ public class GidsApplet extends Applet {
             short qLen = priKey.getQ(buf, (short) 0);
             priKey.setQ(buf, (short) 0, qLen);
             // End of workaround
-            
+
         } catch(CryptoException e) {
             if(e.getReason() == CryptoException.NO_SUCH_ALGORITHM) {
                 ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
@@ -549,7 +551,7 @@ public class GidsApplet extends Applet {
     }
 
 
-    /* 
+    /*
      * Send the public part of RSA key pair
      */
     private void sendPublicKey(APDU apdu, PublicKey publicKey) throws InvalidArgumentsException, NotEnoughSpaceException {
@@ -639,60 +641,60 @@ public class GidsApplet extends Applet {
 
         /* Extract data: */
         switch(p1) {
-        case (byte) 0x81:
-        // SET verification, encipherment, external authentication and key agreement.
-        case (byte) 0xC1:
-            // Private key reference (Index in keys[]-array).
-            try {
-                pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x83);
-            } catch (Exception e) {
-                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-            }
-            if(buf[++pos] != (byte) 0x01 ) {
-                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-            }
-            privKeyRef = buf[++pos];
-            algRef = (byte) 0x02;
-            break;
-        case (byte) 0x41:
-            // SET computation, decipherment, internal authentication and key agreement.
+            case (byte) 0x81:
+                // SET verification, encipherment, external authentication and key agreement.
+            case (byte) 0xC1:
+                // Private key reference (Index in keys[]-array).
+                try {
+                    pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x83);
+                } catch (Exception e) {
+                    ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+                }
+                if(buf[++pos] != (byte) 0x01 ) {
+                    ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+                }
+                privKeyRef = buf[++pos];
+                algRef = (byte) 0x02;
+                break;
+            case (byte) 0x41:
+                // SET computation, decipherment, internal authentication and key agreement.
 
-            // Algorithm reference.
-            try {
-                pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x80);
-            } catch (NotFoundException e) {
-                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-            } catch (InvalidArgumentsException e) {
-                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-            }
-            if(buf[++pos] != (byte) 0x01) { // Length must be 1.
-                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-            }
-            // Set the current algorithm reference.
-            algRef = buf[++pos];
+                // Algorithm reference.
+                try {
+                    pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x80);
+                } catch (NotFoundException e) {
+                    ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+                } catch (InvalidArgumentsException e) {
+                    ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+                }
+                if(buf[++pos] != (byte) 0x01) { // Length must be 1.
+                    ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+                }
+                // Set the current algorithm reference.
+                algRef = buf[++pos];
 
-            // Private key reference (Index in keys[]-array).
-            try {
-                pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x84);
-            } catch (Exception e) {
-                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-            }
-            if(buf[++pos] != (byte) 0x01) {
-                ISOException.throwIt(ISO7816.SW_DATA_INVALID);
-            }
-            privKeyRef = buf[++pos];
-            break;
+                // Private key reference (Index in keys[]-array).
+                try {
+                    pos = UtilTLV.findTag(buf, ISO7816.OFFSET_CDATA, (byte) lc, (byte) 0x84);
+                } catch (Exception e) {
+                    ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+                }
+                if(buf[++pos] != (byte) 0x01) {
+                    ISOException.throwIt(ISO7816.SW_DATA_INVALID);
+                }
+                privKeyRef = buf[++pos];
+                break;
 
-        case (byte) 0xF3:
-            // RESTORE // Set security environment constants to default values.
-            algRef = 0;
-            privKeyRef = -1;
-            break;
+            case (byte) 0xF3:
+                // RESTORE // Set security environment constants to default values.
+                algRef = 0;
+                privKeyRef = -1;
+                break;
 
-        case (byte) 0xF4: // ERASE
-        case (byte) 0xF2: // STORE
-        default:
-            ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
+            case (byte) 0xF4: // ERASE
+            case (byte) 0xF2: // STORE
+            default:
+                ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
         }
 
         if(privKeyRef == -1) {
@@ -777,17 +779,17 @@ public class GidsApplet extends Applet {
 
         switch((byte) (currentAlgorithmRef[0] & 0xF0)) {
 
-        case (byte) 0x80:
-            cipher = rsaOaepCipher;
-            break;
-        case (byte) 0x40:
-            cipher = rsaPkcs1Cipher;
-            break;
-        case (byte) 0x00:
-            cipher = rsaRawCipher;
-            break;
-        default:
-            ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
+            case (byte) 0x80:
+                cipher = rsaOaepCipher;
+                break;
+            case (byte) 0x40:
+                cipher = rsaPkcs1Cipher;
+                break;
+            case (byte) 0x00:
+                cipher = rsaRawCipher;
+                break;
+            default:
+                ISOException.throwIt(ISO7816.SW_FUNC_NOT_SUPPORTED);
         }
         // Get the key - it must be an RSA private key,
         // Checks have been done in MANAGE SECURITY ENVIRONMENT.
@@ -805,7 +807,7 @@ public class GidsApplet extends Applet {
 
         try {
             decLen = cipher.doFinal(ram_buf, (short) 0, lc,
-                                    buf, (short) 0);
+                    buf, (short) 0);
         } catch(CryptoException e) {
             ISOException.throwIt(ISO7816.SW_WRONG_DATA);
         }
@@ -836,56 +838,56 @@ public class GidsApplet extends Applet {
         CRTKeyFile key = (CRTKeyFile) currentKey[0];
 
         switch((byte) (currentAlgorithmRef[0] & 0xF0)) {
-        case (byte) 0x10:
-            // Padding made off card -> raw encryption to be performed
-            lc = transmitManager.doChainingOrExtAPDU(apdu);
+            case (byte) 0x10:
+                // Padding made off card -> raw encryption to be performed
+                lc = transmitManager.doChainingOrExtAPDU(apdu);
 
-            // RSA signature operation.
-            rsaKey = key.GetKey().getPrivate();
+                // RSA signature operation.
+                rsaKey = key.GetKey().getPrivate();
 
-            rsaRawCipher.init(rsaKey, Cipher.MODE_ENCRYPT);
-            sigLen = rsaRawCipher.doFinal(ram_buf, (short) 0, lc, ram_buf, (short)0);
-            // A single short APDU can handle 256 bytes - only one send operation neccessary.
-            le = apdu.setOutgoing();
-            if(le > 0 && le < sigLen) {
-                ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
-            }
-            apdu.setOutgoingLength(sigLen);
-            apdu.sendBytesLong(ram_buf, (short) 0, sigLen);
-            break;
-        case (byte) 0x50:
-            // RSA padding is made by the card, only the hash is provided
+                rsaRawCipher.init(rsaKey, Cipher.MODE_ENCRYPT);
+                sigLen = rsaRawCipher.doFinal(ram_buf, (short) 0, lc, ram_buf, (short)0);
+                // A single short APDU can handle 256 bytes - only one send operation neccessary.
+                le = apdu.setOutgoing();
+                if(le > 0 && le < sigLen) {
+                    ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
+                }
+                apdu.setOutgoingLength(sigLen);
+                apdu.sendBytesLong(ram_buf, (short) 0, sigLen);
+                break;
+            case (byte) 0x50:
+                // RSA padding is made by the card, only the hash is provided
 
-            // Receive.
-            // Bytes received must be Lc.
-            lc = apdu.setIncomingAndReceive();
+                // Receive.
+                // Bytes received must be Lc.
+                lc = apdu.setIncomingAndReceive();
 
-            // RSA signature operation.
-            rsaKey = key.GetKey().getPrivate();
+                // RSA signature operation.
+                rsaKey = key.GetKey().getPrivate();
 
-            if(lc > (short) 247) {
-                ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
-            }
-            
-            rsaPkcs1Cipher.init(rsaKey, Cipher.MODE_ENCRYPT);
-            sigLen = rsaPkcs1Cipher.doFinal(buf, ISO7816.OFFSET_CDATA, lc, ram_buf, (short)0);
+                if(lc > (short) 247) {
+                    ISOException.throwIt(ISO7816.SW_WRONG_LENGTH);
+                }
+
+                rsaPkcs1Cipher.init(rsaKey, Cipher.MODE_ENCRYPT);
+                sigLen = rsaPkcs1Cipher.doFinal(buf, ISO7816.OFFSET_CDATA, lc, ram_buf, (short)0);
 
             /*if(sigLen != 256) {
                 ISOException.throwIt(ISO7816.SW_UNKNOWN);
             }*/
 
-            // A single short APDU can handle 256 bytes - only one send operation neccessary.
-            le = apdu.setOutgoing();
-            if(le > 0 && le < sigLen) {
-                ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
-            }
-            apdu.setOutgoingLength(sigLen);
-            apdu.sendBytesLong(ram_buf, (short) 0, sigLen);
-            break;
+                // A single short APDU can handle 256 bytes - only one send operation neccessary.
+                le = apdu.setOutgoing();
+                if(le > 0 && le < sigLen) {
+                    ISOException.throwIt(ISO7816.SW_CORRECT_LENGTH_00);
+                }
+                apdu.setOutgoingLength(sigLen);
+                apdu.sendBytesLong(ram_buf, (short) 0, sigLen);
+                break;
 
-        default:
-            // Wrong/unknown algorithm.
-            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+            default:
+                // Wrong/unknown algorithm.
+                ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
     }
 
@@ -907,12 +909,12 @@ public class GidsApplet extends Applet {
             fs.processPutData(apdu);
         }
     }
-    
-    
+
+
     /*
-    * \ Function to Get VERSION
-    */
-        protected void getVersion(APDU apdu)
+     * \ Function to Get VERSION
+     */
+    protected void getVersion(APDU apdu)
     {
         byte[] buf = apdu.getBuffer();
         apdu.setIncomingAndReceive();
@@ -953,7 +955,7 @@ public class GidsApplet extends Applet {
 
     }
 
-    
+
     /**
      * \brief Upload and import a usable private key.
      *
@@ -985,7 +987,7 @@ public class GidsApplet extends Applet {
             recvLen = transmitManager.doChainingOrExtAPDUFlash(apdu);
             // If these 2 lines are reversed, flash bufber can be null
             flash_buf = transmitManager.GetFlashBuffer();
-            
+
             try {
                 innerPos = UtilTLV.findTag(flash_buf, (short) 0, recvLen, (byte) 0x70);
                 innerLen = UtilTLV.decodeLengthField(flash_buf, (short)(innerPos+1));
@@ -993,7 +995,7 @@ public class GidsApplet extends Applet {
             } catch (Exception e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-    
+
             try {
                 pos = UtilTLV.findTag(flash_buf, innerPos, innerLen, (byte) 0x84);
                 len = UtilTLV.decodeLengthField(flash_buf, (short)(innerPos+1));
@@ -1004,7 +1006,7 @@ public class GidsApplet extends Applet {
             } catch (Exception e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-            
+
             try {
                 pos = UtilTLV.findTag(flash_buf, innerPos, innerLen, (byte) 0xA5);
                 len = UtilTLV.decodeLengthField(flash_buf, (short)(innerPos+1));
@@ -1014,14 +1016,14 @@ public class GidsApplet extends Applet {
             if(privKeyRef == -1) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
-            
+
             try {
                 crt = fs.findKeyCRT(privKeyRef);
             } catch (NotFoundException e) {
                 ISOException.throwIt(ISO7816.SW_DATA_INVALID);
             }
             crt.CheckPermission(pinManager, File.ACL_OP_KEY_PUTKEY);
-    
+
             try {
                 crt.importKey(flash_buf, pos, len);
             } catch (InvalidArgumentsException e) {
@@ -1029,15 +1031,15 @@ public class GidsApplet extends Applet {
             }
             // Clear resource and avoid leaking a private key in flash (if the private key is deleted after)
             transmitManager.ClearFlashBuffer();
-            
+
         } catch(ISOException e) {
-            if (e.getReason() != ISO7816.SW_NO_ERROR) {                
+            if (e.getReason() != ISO7816.SW_NO_ERROR) {
                 // Clear resource and avoid leaking a private key in flash (if the private key is deleted after)
                 transmitManager.ClearFlashBuffer();
             }
             throw e;
         }
-        
+
     }
 
 } // class GidsApplet
