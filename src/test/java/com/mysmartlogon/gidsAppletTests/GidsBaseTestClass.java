@@ -23,7 +23,7 @@ import javacard.security.KeyBuilder;
 import javacardx.crypto.Cipher;
 
 public abstract class GidsBaseTestClass {
-    final boolean USE_SIMULATOR = false;
+    final boolean USE_SIMULATOR = true;
     private final int TARGET_READER_INDEX = 0;
 
     static Card physicalCard = null;
