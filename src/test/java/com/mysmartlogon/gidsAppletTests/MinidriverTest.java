@@ -48,7 +48,7 @@ public class MinidriverTest extends GidsBaseTestClass {
     INS         DB 
     P1-P2       3F FF, 00 00 or file identifier 
     Lc          Length of data field 
-    Data Field  See “P1-P2 Parameters” 
+    Data Field  See P1-P2 Parameters
     Le          Absent
     */    
     @Test
