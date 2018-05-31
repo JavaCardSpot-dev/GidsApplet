@@ -141,6 +141,7 @@ public class BerTlvFile extends ElementaryFile {
                     Util.arrayCopyNonAtomic(buffer, offset, data, (short) 0, lengthToCopy);
                     deleteChildren(i);
                     children[currentNumChildren++] = record;
+                    return record;
                 }
                 return children[i];
             }
